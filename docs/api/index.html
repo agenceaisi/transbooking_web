@@ -1,0 +1,1728 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TransBooking BF — Documentation API REST</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚌</text></svg>">
+    <style>
+        :root {
+            --primary: #16a34a;
+            --primary-dark: #15803d;
+            --accent: #2563eb;
+            --dark: #0f172a;
+            --slate: #1e293b;
+            --get: #2563eb;
+            --post: #16a34a;
+            --patch: #d97706;
+            --delete: #dc2626;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.7;
+            color: #1f2937;
+            background-color: #f1f5f9;
+            scroll-behavior: smooth;
+        }
+
+        /* ---------- Layout : sidebar + contenu ---------- */
+        .layout { display: flex; max-width: 1400px; margin: 0 auto; background: #fff; min-height: 100vh; }
+
+        aside {
+            width: 280px;
+            flex-shrink: 0;
+            background: var(--dark);
+            color: #cbd5e1;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+            padding: 1.5rem 0;
+        }
+        aside .brand { padding: 0 1.5rem 1rem; border-bottom: 1px solid #334155; margin-bottom: 1rem; }
+        aside .brand h1 { color: #fff; font-size: 1.3rem; display: flex; align-items: center; gap: .5rem; }
+        aside .brand span { font-size: .8rem; color: #94a3b8; }
+        aside .version { display: inline-block; margin-top: .4rem; background: var(--primary); color: #fff; font-size: .7rem; padding: .1rem .5rem; border-radius: 999px; }
+
+        aside .search { padding: 0 1.5rem 1rem; }
+        aside .search input {
+            width: 100%; padding: .55rem .75rem; border-radius: 8px; border: 1px solid #334155;
+            background: #1e293b; color: #e2e8f0; font-size: .85rem;
+        }
+        aside .search input::placeholder { color: #64748b; }
+
+        aside nav ul { list-style: none; }
+        aside nav > ul > li > a { color: #94a3b8; text-transform: uppercase; font-size: .72rem; letter-spacing: .05em; font-weight: 700; padding: .8rem 1.5rem .3rem; display: block; }
+        aside nav a { color: #cbd5e1; text-decoration: none; display: block; padding: .35rem 1.5rem .35rem 2rem; font-size: .88rem; border-left: 3px solid transparent; transition: all .15s; }
+        aside nav a.sub:hover { background: #1e293b; border-left-color: var(--primary); color: #fff; }
+
+        main { flex: 1; padding: 2.5rem 3rem; max-width: 100%; overflow-x: hidden; }
+
+        section { margin-bottom: 3.5rem; scroll-margin-top: 1rem; }
+        h2 { color: var(--dark); font-size: 1.8rem; border-bottom: 3px solid var(--primary); padding-bottom: .5rem; margin-bottom: 1.2rem; }
+        h3 { color: var(--slate); font-size: 1.3rem; margin: 2rem 0 .8rem; }
+        h4 { color: var(--slate); font-size: 1.05rem; margin: 1.2rem 0 .5rem; }
+        p { margin-bottom: 1rem; }
+        a { color: var(--accent); }
+
+        code { background: #f1f5f9; padding: .15rem .4rem; border-radius: 4px; font-family: 'JetBrains Mono', 'Courier New', monospace; color: #be185d; font-size: .88em; }
+        pre { background: var(--dark); color: #e2e8f0; padding: 1.1rem 1.3rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0; font-size: .85rem; line-height: 1.6; }
+        pre code { background: none; color: inherit; padding: 0; }
+
+        .highlight { background: linear-gradient(to right, #ecfdf5, #f0fdf4); border-left: 4px solid var(--primary); padding: 1.2rem 1.4rem; margin: 1.2rem 0; border-radius: 8px; }
+        .warning { background: #fffbeb; border-left: 4px solid #f59e0b; padding: 1rem 1.4rem; margin: 1rem 0; border-radius: 8px; }
+        .danger { background: #fef2f2; border-left: 4px solid #ef4444; padding: 1rem 1.4rem; margin: 1rem 0; border-radius: 8px; }
+        .info { background: #eff6ff; border-left: 4px solid var(--accent); padding: 1rem 1.4rem; margin: 1rem 0; border-radius: 8px; }
+        .tip { background: #faf5ff; border-left: 4px solid #a855f7; padding: 1rem 1.4rem; margin: 1rem 0; border-radius: 8px; }
+
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: .9rem; }
+        th, td { border: 1px solid #e2e8f0; padding: .6rem .8rem; text-align: left; vertical-align: top; }
+        th { background: #f8fafc; font-weight: 600; color: var(--slate); }
+        tbody tr:nth-child(even) { background: #fbfcfe; }
+
+        /* ---------- Cartes endpoint ---------- */
+        .endpoint { border: 1px solid #e2e8f0; border-radius: 12px; margin: 1.5rem 0; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+        .endpoint-head { display: flex; align-items: center; gap: .8rem; padding: .9rem 1.2rem; background: #f8fafc; border-bottom: 1px solid #e2e8f0; flex-wrap: wrap; }
+        .method { font-weight: 700; font-size: .78rem; padding: .25rem .7rem; border-radius: 6px; color: #fff; letter-spacing: .03em; min-width: 62px; text-align: center; }
+        .method.get { background: var(--get); }
+        .method.post { background: var(--post); }
+        .method.patch { background: var(--patch); }
+        .method.delete { background: var(--delete); }
+        .endpoint-head .path { font-family: 'JetBrains Mono', monospace; font-size: .95rem; color: var(--dark); font-weight: 600; }
+        .endpoint-head .role-badge { margin-left: auto; font-size: .72rem; background: #e0e7ff; color: #3730a3; padding: .2rem .6rem; border-radius: 999px; font-weight: 600; }
+        .endpoint-head .role-badge.public { background: #dcfce7; color: #166534; }
+        .endpoint-body { padding: 1.2rem 1.4rem; }
+        .endpoint-body .desc { color: #475569; margin-bottom: .8rem; }
+
+        .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.2rem; margin: 1.5rem 0; }
+        .feature-card { border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.2rem; background: #fff; }
+        .feature-card h4 { color: var(--primary); margin-top: 0; }
+
+        .badge { display: inline-block; font-size: .72rem; padding: .15rem .5rem; border-radius: 6px; font-weight: 600; }
+        .badge.req { background: #fee2e2; color: #991b1b; }
+        .badge.opt { background: #e2e8f0; color: #475569; }
+
+        footer { background: var(--dark); color: #94a3b8; text-align: center; padding: 2.5rem; margin-top: 3rem; font-size: .88rem; }
+        footer a { color: #cbd5e1; }
+
+        .hidden { display: none !important; }
+        .no-result { padding: 2rem; text-align: center; color: #94a3b8; }
+
+        @media (max-width: 900px) {
+            aside { display: none; }
+            main { padding: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="layout">
+    <!-- ===================== SIDEBAR ===================== -->
+    <aside>
+        <div class="brand">
+            <h1>🚌 TransBooking</h1>
+            <span>API REST — Transport interurbain BF</span>
+            <div class="version">API v1</div>
+        </div>
+        <div class="search">
+            <input type="text" id="searchBox" placeholder="🔎 Filtrer les endpoints…" autocomplete="off">
+        </div>
+        <nav>
+            <ul>
+                <li><a href="#overview">Généralités</a></li>
+                <li><a class="sub" href="#overview">Vue d'ensemble</a></li>
+                <li><a class="sub" href="#conventions">Conventions</a></li>
+                <li><a class="sub" href="#auth-flow">Authentification (JWT)</a></li>
+                <li><a class="sub" href="#roles">Rôles &amp; permissions</a></li>
+                <li><a class="sub" href="#errors">Codes d'erreur</a></li>
+
+                <li><a href="#mod-users">Module Users</a></li>
+                <li><a class="sub" href="#ep-register">Inscription</a></li>
+                <li><a class="sub" href="#ep-login">Connexion</a></li>
+                <li><a class="sub" href="#ep-refresh">Rafraîchir token</a></li>
+                <li><a class="sub" href="#ep-logout">Déconnexion</a></li>
+                <li><a class="sub" href="#ep-me">Profil (me)</a></li>
+
+                <li><a href="#mod-bookings">Module Bookings</a></li>
+                <li><a class="sub" href="#ep-book-list">Mes réservations</a></li>
+                <li><a class="sub" href="#ep-book-create">Créer une réservation</a></li>
+                <li><a class="sub" href="#ep-book-cancel">Annuler</a></li>
+                <li><a class="sub" href="#ep-book-ticket">Billet PDF</a></li>
+                <li><a class="sub" href="#ep-agent-create">Guichet — vendre</a></li>
+                <li><a class="sub" href="#ep-agent-get">Guichet — chercher</a></li>
+                <li><a class="sub" href="#ep-scan">Contrôle — scan QR</a></li>
+                <li><a class="sub" href="#ep-boarding">Contrôle — embarquement</a></li>
+                <li><a class="sub" href="#ep-company">Admin — liste &amp; export</a></li>
+
+                <li><a href="#mod-companies">Module Companies</a></li>
+                <li><a href="#mod-geography">Module Geography</a></li>
+                <li><a href="#mod-vehicles">Module Vehicles</a></li>
+                <li><a href="#mod-routes">Module Routes</a></li>
+                <li><a href="#mod-trips">Module Trips</a></li>
+                <li><a href="#mod-payments">Module Payments</a></li>
+                <li><a href="#mod-parcels">Module Parcels</a></li>
+                <li><a href="#mod-claims">Module Claims</a></li>
+                <li><a href="#mod-reviews">Module Reviews</a></li>
+                <li><a href="#mod-speed">Module Speed Reports</a></li>
+                <li><a href="#mod-messaging">Module Messaging</a></li>
+                <li><a href="#mod-notifications">Module Notifications</a></li>
+                <li><a href="#mod-sync">Module Sync (offline)</a></li>
+                <li><a href="#mod-dashboard">Module Dashboard</a></li>
+
+                <li><a href="#improvements">Améliorations proposées</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- ===================== CONTENU ===================== -->
+    <main>
+        <!-- ---------- Vue d'ensemble ---------- -->
+        <section id="overview">
+            <h2>🎯 Vue d'ensemble</h2>
+            <p><strong>TransBooking BF</strong> est une plateforme SaaS multi-tenant de gestion du transport
+            interurbain au Burkina Faso. Cette API REST alimente les applications web et mobiles de
+            cinq acteurs&nbsp;: <em>super admin</em>, <em>administrateur de compagnie</em>,
+            <em>agent guichet</em>, <em>contrôleur</em> et <em>voyageur</em>.</p>
+
+            <div class="highlight">
+                <h4>🚀 Caractéristiques principales</h4>
+                <ul style="padding-left:1.5rem;">
+                    <li><strong>Authentification JWT</strong> (SimpleJWT) avec rotation et blacklist des tokens.</li>
+                    <li><strong>Isolation multi-tenant stricte</strong>&nbsp;: chaque compagnie ne voit que ses données.</li>
+                    <li><strong>Mode hors ligne</strong>&nbsp;: les agents vendent sans internet, synchronisation différée.</li>
+                    <li><strong>Réservation concurrente sûre</strong> via verrou de ligne <code>select_for_update()</code>.</li>
+                    <li><strong>QR code &amp; billet PDF</strong> encodant le <code>ticket_number</code>, jamais l'<code>id</code> DB.</li>
+                    <li><strong>Rate limiting</strong> sur les endpoints d'authentification.</li>
+                    <li><strong>Export</strong> des réservations en Excel / PDF / CSV.</li>
+                </ul>
+            </div>
+
+            <h3>🏗️ Architecture des modules</h3>
+            <p>Le backend est découpé en applications Django. Cette documentation couvre <strong>l'ensemble des 16 modules
+            exposant une API REST</strong>&nbsp;; seul <code>subscriptions</code> reste interne (pas d'endpoints).</p>
+            <pre><code>apps/
+├── users/         # Comptes, rôles, authentification JWT
+├── companies/     # Compagnies (multi-tenant), validation, paramètres
+├── geography/     # Villes & gares
+├── vehicles/      # Parc & plans de sièges
+├── routes/        # Trajets types & escales
+├── trips/         # Voyages datés (recherche, génération)
+├── bookings/      # Réservations, embarquement, export
+├── payments/      # Paiements & reçus
+├── parcels/       # Colis (suivi, notification)
+├── claims/        # Réclamations
+├── reviews/       # Avis clients
+├── speed_reports/ # Signalements d'excès de vitesse
+├── messaging/     # Messagerie interne
+├── notifications/ # Notifications in-app
+├── sync/          # Mode hors ligne (paquet + synchronisation)
+├── dashboard/     # Tableaux de bord agrégés
+└── subscriptions/ # (modèles internes, pas d'API)
+utils/  permissions.py · pagination.py · sms.py · qr.py</code></pre>
+
+            <h3>📊 Flux d'une réservation</h3>
+            <pre><code>Voyageur ──POST /bookings/──▶ verrou trip (select_for_update)
+                                   │
+                        siège auto-attribué + ticket_number + QR
+                                   │
+                     statut = pending ──▶ paiement ──▶ statut = paid
+                                                          │
+                              SMS de confirmation ◀───────┘
+                                   │
+   Contrôleur ──scan QR──▶ feu tricolore (vert / orange / rouge)
+                                   │
+                        embarquement (BoardingValidation)</code></pre>
+        </section>
+
+        <!-- ---------- Conventions ---------- -->
+        <section id="conventions">
+            <h2>📐 Conventions générales</h2>
+
+            <h3>URL de base &amp; préfixes</h3>
+            <p>Toutes les routes sont versionnées sous <code>/api/v1/</code>. Le premier segment indique le périmètre&nbsp;:</p>
+            <table>
+                <thead><tr><th>Préfixe</th><th>Périmètre</th><th>Accès</th></tr></thead>
+                <tbody>
+                    <tr><td><code>/api/v1/public/</code></td><td>Endpoints publics (recherche, suivi)</td><td>Anonyme</td></tr>
+                    <tr><td><code>/api/v1/</code></td><td>Espace voyageur authentifié</td><td>Voyageur</td></tr>
+                    <tr><td><code>/api/v1/agent/</code></td><td>Guichet &amp; contrôle</td><td>Agent guichet / contrôleur</td></tr>
+                    <tr><td><code>/api/v1/company/</code></td><td>Administration compagnie</td><td>Company admin</td></tr>
+                    <tr><td><code>/api/v1/super/</code></td><td>Super administration</td><td>Super admin</td></tr>
+                </tbody>
+            </table>
+            <div class="info">Base URL de développement&nbsp;: <code>http://localhost:8000</code>. Toutes les URLs de
+            cette page sont relatives à <code>/api/v1/</code>.</div>
+
+            <h3>En-têtes requis</h3>
+            <pre><code>Content-Type: application/json
+Authorization: Bearer &lt;access_token&gt;   # sauf endpoints publics</code></pre>
+
+            <h3>Pagination</h3>
+            <p>Les collections renvoient une enveloppe paginée&nbsp;:</p>
+            <pre><code>{
+  "count": 128,
+  "next": "http://localhost:8000/api/v1/bookings/?page=2",
+  "previous": null,
+  "results": [ /* … */ ]
+}</code></pre>
+
+            <h3>Format d'erreur</h3>
+            <p>Les erreurs suivent le format standard DRF&nbsp;: soit un objet par champ, soit une clé <code>detail</code>.</p>
+            <pre><code>// Erreur de validation (400)
+{ "phone": ["Ce numero de telephone est deja utilise."] }
+
+// Erreur métier / permission (403, 404, 409, 410)
+{ "detail": "Ce voyage est complet." }</code></pre>
+        </section>
+
+        <!-- ---------- Auth flow ---------- -->
+        <section id="auth-flow">
+            <h2>🔐 Authentification (JWT)</h2>
+            <p>L'API utilise des <strong>JSON Web Tokens</strong>. Le flux est&nbsp;: se connecter pour obtenir une paire
+            <code>access</code> / <code>refresh</code>, envoyer l'<code>access</code> dans l'en-tête <code>Authorization</code>,
+            puis le renouveler via <code>refresh</code> avant expiration.</p>
+            <pre><code>1. POST /auth/register/       → crée un compte voyageur
+2. POST /auth/login/          → { access, refresh, role, prenom }
+3. Authorization: Bearer &lt;access&gt;   sur chaque requête protégée
+4. POST /auth/token/refresh/  → nouvel access (avant expiration)
+5. POST /auth/logout/         → blacklist du refresh</code></pre>
+            <div class="tip"><strong>Durées recommandées</strong>&nbsp;: <code>access</code> court (≈ 15 min),
+            <code>refresh</code> long (≈ 7 jours) avec rotation et blacklist activées.</div>
+        </section>
+
+        <!-- ---------- Rôles ---------- -->
+        <section id="roles">
+            <h2>👥 Rôles &amp; matrice de permissions</h2>
+            <p>Chaque vue déclare explicitement ses <code>permission_classes</code>. Un token valide ne suffit pas&nbsp;:
+            le rôle doit correspondre. Une compagnie <em>suspendue</em> ou <em>rejetée</em> bloque son administrateur.</p>
+            <table>
+                <thead><tr><th>Rôle</th><th>Classe</th><th>Peut notamment…</th></tr></thead>
+                <tbody>
+                    <tr><td><code>voyageur</code></td><td><code>IsVoyageur</code></td><td>Réserver, annuler, télécharger son billet</td></tr>
+                    <tr><td><code>agent_guichet</code></td><td><code>IsAgentGuichet</code></td><td>Vendre au guichet (online/offline), rechercher un billet</td></tr>
+                    <tr><td><code>controleur</code></td><td><code>IsControleur</code></td><td>Scanner un QR, embarquer les passagers</td></tr>
+                    <tr><td><code>company_admin</code></td><td><code>IsCompanyAdmin</code></td><td>Lister &amp; exporter les réservations de sa compagnie</td></tr>
+                    <tr><td><code>super_admin</code></td><td><code>IsSuperAdmin</code></td><td>Supervision transverse de la plateforme</td></tr>
+                </tbody>
+            </table>
+            <div class="warning"><strong>Isolation multi-tenant</strong>&nbsp;: tous les <code>get_queryset()</code> filtrent
+            par la compagnie de l'utilisateur courant. Un agent/contrôleur/admin ne peut jamais accéder aux données
+            d'une autre compagnie (réponse 404, jamais 403 pour ne pas révéler l'existence de la ressource).</div>
+        </section>
+
+        <!-- ---------- Codes d'erreur ---------- -->
+        <section id="errors">
+            <h2>⚠️ Référence des codes d'erreur</h2>
+            <table>
+                <thead><tr><th>Statut</th><th>Code</th><th>Signification</th><th>Où ?</th></tr></thead>
+                <tbody>
+                    <tr><td>400</td><td><code>validation_error</code></td><td>Corps invalide (champ manquant, format, doublon)</td><td>Tous</td></tr>
+                    <tr><td>401</td><td><code>not_authenticated</code></td><td>Token absent, invalide ou expiré</td><td>Protégés</td></tr>
+                    <tr><td>403</td><td><code>permission_denied</code></td><td>Rôle non autorisé / compagnie suspendue</td><td>Protégés</td></tr>
+                    <tr><td>404</td><td><code>not_found</code></td><td>Ressource inexistante ou hors périmètre tenant</td><td>Tous</td></tr>
+                    <tr><td>409</td><td><code>trip_full</code></td><td>Voyage complet, plus aucun siège</td><td>Réservation</td></tr>
+                    <tr><td>409</td><td><code>seat_taken</code></td><td>Siège demandé déjà attribué (course concurrente)</td><td>Réservation</td></tr>
+                    <tr><td>409</td><td><code>cancellation_too_late</code></td><td>Annulation à moins de 2h du départ (voyageur)</td><td>Annulation</td></tr>
+                    <tr><td>410</td><td><code>trip_unavailable</code></td><td>Voyage annulé ou terminé</td><td>Réservation</td></tr>
+                    <tr><td>429</td><td><code>throttled</code></td><td>Limite de débit dépassée (10 req/min sur /auth/)</td><td>Auth</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- ============================================================= -->
+        <!-- MODULE USERS                                                    -->
+        <!-- ============================================================= -->
+        <section id="mod-users">
+            <h2>👤 Module Users</h2>
+            <p>Gestion des comptes et de l'authentification. L'inscription publique crée exclusivement des
+            comptes <strong>voyageur</strong>&nbsp;; les comptes agents et administrateurs sont provisionnés en interne.</p>
+
+            <div class="feature-grid">
+                <div class="feature-card"><h4>Identifiant</h4><p>Le <code>phone</code> (numéro burkinabè validé) est l'identifiant de connexion, pas l'email.</p></div>
+                <div class="feature-card"><h4>Mot de passe</h4><p>8 caractères minimum, stocké haché (jamais renvoyé par l'API).</p></div>
+                <div class="feature-card"><h4>Rôle</h4><p>Renvoyé dans le token de login pour aiguiller l'interface cliente.</p></div>
+            </div>
+
+            <!-- register -->
+            <div class="endpoint" data-search="register inscription auth voyageur créer compte">
+                <div class="endpoint-head" id="ep-register">
+                    <span class="method post">POST</span>
+                    <span class="path">/auth/register/</span>
+                    <span class="role-badge public">Public</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Crée un compte voyageur. Limité à 10 requêtes/minute par IP.</p>
+                    <h4>Corps de la requête</h4>
+                    <table>
+                        <thead><tr><th>Champ</th><th>Type</th><th></th><th>Détail</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>prenom</code></td><td>string</td><td><span class="badge req">requis</span></td><td>max 100</td></tr>
+                            <tr><td><code>nom</code></td><td>string</td><td><span class="badge req">requis</span></td><td>max 100</td></tr>
+                            <tr><td><code>phone</code></td><td>string</td><td><span class="badge req">requis</span></td><td>numéro BF valide, unique</td></tr>
+                            <tr><td><code>password</code></td><td>string</td><td><span class="badge req">requis</span></td><td>min 8, <em>write-only</em></td></tr>
+                            <tr><td><code>email</code></td><td>string</td><td><span class="badge opt">optionnel</span></td><td>peut être vide/null</td></tr>
+                        </tbody>
+                    </table>
+                    <h4>Exemple</h4>
+                    <pre><code>curl -X POST http://localhost:8000/api/v1/auth/register/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prenom": "Awa",
+    "nom": "Ouedraogo",
+    "phone": "+22670123456",
+    "password": "motdepasse123"
+  }'</code></pre>
+                    <h4>Réponse — <code>201 Created</code></h4>
+                    <pre><code>{
+  "prenom": "Awa",
+  "nom": "Ouedraogo",
+  "phone": "+22670123456",
+  "email": null,
+  "role": "voyageur"
+}</code></pre>
+                    <h4>Erreurs</h4>
+                    <p><code>400</code> numéro déjà utilisé / format invalide / mot de passe trop court · <code>429</code> trop de tentatives.</p>
+                </div>
+            </div>
+
+            <!-- login -->
+            <div class="endpoint" data-search="login connexion token jwt access refresh">
+                <div class="endpoint-head" id="ep-login">
+                    <span class="method post">POST</span>
+                    <span class="path">/auth/login/</span>
+                    <span class="role-badge public">Public</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Authentifie un utilisateur et renvoie une paire de tokens JWT enrichie du rôle.</p>
+                    <h4>Corps</h4>
+                    <table>
+                        <thead><tr><th>Champ</th><th>Type</th><th></th></tr></thead>
+                        <tbody>
+                            <tr><td><code>phone</code></td><td>string</td><td><span class="badge req">requis</span></td></tr>
+                            <tr><td><code>password</code></td><td>string</td><td><span class="badge req">requis</span></td></tr>
+                        </tbody>
+                    </table>
+                    <h4>Exemple</h4>
+                    <pre><code>curl -X POST http://localhost:8000/api/v1/auth/login/ \
+  -H "Content-Type: application/json" \
+  -d '{ "phone": "+22670123456", "password": "motdepasse123" }'</code></pre>
+                    <h4>Réponse — <code>200 OK</code></h4>
+                    <pre><code>{
+  "access": "eyJhbGciOiJIUzI1NiІ...",
+  "refresh": "eyJhbGciOiJIUzI1NiІ...",
+  "role": "voyageur",
+  "prenom": "Awa"
+}</code></pre>
+                    <h4>Erreurs</h4>
+                    <p><code>401</code> identifiants invalides · <code>429</code> trop de tentatives.</p>
+                </div>
+            </div>
+
+            <!-- refresh -->
+            <div class="endpoint" data-search="refresh token renouveler jwt">
+                <div class="endpoint-head" id="ep-refresh">
+                    <span class="method post">POST</span>
+                    <span class="path">/auth/token/refresh/</span>
+                    <span class="role-badge public">Public</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Échange un token <code>refresh</code> valide contre un nouveau token <code>access</code>.</p>
+                    <pre><code>curl -X POST http://localhost:8000/api/v1/auth/token/refresh/ \
+  -H "Content-Type: application/json" \
+  -d '{ "refresh": "eyJhbGciOiJIUzI1NiІ..." }'</code></pre>
+                    <h4>Réponse — <code>200 OK</code></h4>
+                    <pre><code>{ "access": "eyJhbGciOiJIUzI1NiІ..." }</code></pre>
+                    <p><code>401</code> refresh invalide/expiré/blacklisté.</p>
+                </div>
+            </div>
+
+            <!-- logout -->
+            <div class="endpoint" data-search="logout deconnexion blacklist token">
+                <div class="endpoint-head" id="ep-logout">
+                    <span class="method post">POST</span>
+                    <span class="path">/auth/logout/</span>
+                    <span class="role-badge">Authentifié</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Invalide le token <code>refresh</code> en l'ajoutant à la blacklist.</p>
+                    <pre><code>curl -X POST http://localhost:8000/api/v1/auth/logout/ \
+  -H "Authorization: Bearer &lt;access&gt;" \
+  -H "Content-Type: application/json" \
+  -d '{ "refresh": "eyJhbGciOiJIUzI1NiІ..." }'</code></pre>
+                    <h4>Réponse — <code>204 No Content</code></h4>
+                    <p><code>400</code> token invalide ou déjà expiré · <code>401</code> non authentifié.</p>
+                </div>
+            </div>
+
+            <!-- me -->
+            <div class="endpoint" data-search="me profil utilisateur courant modifier">
+                <div class="endpoint-head" id="ep-me">
+                    <span class="method get">GET</span>
+                    <span class="method patch">PATCH</span>
+                    <span class="path">/users/me/</span>
+                    <span class="role-badge">Authentifié</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Consulte (<code>GET</code>) ou met à jour partiellement (<code>PATCH</code>) le profil du compte connecté.
+                    Seuls <code>phone</code> et <code>email</code> sont modifiables.</p>
+                    <h4>GET — Réponse <code>200 OK</code></h4>
+                    <pre><code>{
+  "prenom": "Awa",
+  "nom": "Ouedraogo",
+  "phone": "+22670123456",
+  "email": "awa@example.bf",
+  "role": "voyageur"
+}</code></pre>
+                    <h4>PATCH — Exemple</h4>
+                    <pre><code>curl -X PATCH http://localhost:8000/api/v1/users/me/ \
+  -H "Authorization: Bearer &lt;access&gt;" \
+  -H "Content-Type: application/json" \
+  -d '{ "email": "awa.o@example.bf" }'</code></pre>
+                    <p><code>400</code> numéro déjà utilisé · <code>401</code> non authentifié.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================= -->
+        <!-- MODULE BOOKINGS                                                 -->
+        <!-- ============================================================= -->
+        <section id="mod-bookings">
+            <h2>🎫 Module Bookings</h2>
+            <p>Cœur du système. Une réservation peut être créée en ligne par un voyageur ou au guichet par un agent
+            (éventuellement hors ligne). Le siège est décrémenté sous verrou de ligne pour empêcher la survente.</p>
+
+            <div class="danger"><strong>Sécurité URL</strong>&nbsp;: les endpoints guichet utilisent le
+            <code>ticket_number</code> (ex. <code>BF2026001234</code>) comme identifiant public, jamais l'<code>id</code>
+            séquentiel. Le QR code encode également le <code>ticket_number</code>.</div>
+
+            <h3>Statuts d'une réservation</h3>
+            <table>
+                <thead><tr><th>Statut</th><th>Libellé</th><th>Feu (scan)</th></tr></thead>
+                <tbody>
+                    <tr><td><code>pending</code></td><td>En attente de paiement</td><td>🟠 orange</td></tr>
+                    <tr><td><code>paid</code></td><td>Payé (embarquement autorisé)</td><td>🟢 vert</td></tr>
+                    <tr><td><code>cancelled</code></td><td>Annulé</td><td>🔴 rouge</td></tr>
+                    <tr><td><code>refunded</code></td><td>Remboursé</td><td>🔴 rouge</td></tr>
+                </tbody>
+            </table>
+
+            <h3>🧳 Espace voyageur</h3>
+
+            <!-- list -->
+            <div class="endpoint" data-search="mes reservations liste voyageur bookings">
+                <div class="endpoint-head" id="ep-book-list">
+                    <span class="method get">GET</span>
+                    <span class="path">/bookings/</span>
+                    <span class="role-badge">Voyageur</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Liste paginée des réservations du voyageur connecté (les plus récentes d'abord).</p>
+                    <pre><code>curl http://localhost:8000/api/v1/bookings/ \
+  -H "Authorization: Bearer &lt;access&gt;"</code></pre>
+                    <h4>Réponse — <code>200 OK</code> (extrait <code>results[]</code>)</h4>
+                    <pre><code>{
+  "id": 42,
+  "ticket_number": "BF2026001234",
+  "trip": {
+    "id": 7,
+    "origin_city": "Ouagadougou",
+    "destination_city": "Bobo-Dioulasso",
+    "departure_time": "2026-07-10T08:00:00Z",
+    "arrival_time": "2026-07-10T13:00:00Z",
+    "status": "scheduled"
+  },
+  "passenger_name": "Awa Ouedraogo",
+  "seat_number": "12",
+  "amount": "8000.00",
+  "status": "paid",
+  "status_display": "Paye",
+  "is_boarded": false,
+  "qr_code": "iVBORw0KGgo...",
+  "created_at": "2026-07-02T09:15:00Z"
+}</code></pre>
+                </div>
+            </div>
+
+            <!-- retrieve mention -->
+            <div class="endpoint" data-search="detail reservation get une">
+                <div class="endpoint-head">
+                    <span class="method get">GET</span>
+                    <span class="path">/bookings/{id}/</span>
+                    <span class="role-badge">Voyageur</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Détail d'une de ses réservations. <code>404</code> si la réservation appartient à un autre compte.</p>
+                </div>
+            </div>
+
+            <!-- create -->
+            <div class="endpoint" data-search="creer reservation booking voyageur reserver siege">
+                <div class="endpoint-head" id="ep-book-create">
+                    <span class="method post">POST</span>
+                    <span class="path">/bookings/</span>
+                    <span class="role-badge">Voyageur</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Crée une réservation au statut <code>pending</code>. Le siège est auto-attribué si absent&nbsp;;
+                    l'identité du passager reprend par défaut le compte connecté&nbsp;; le montant provient du prix du voyage.</p>
+                    <h4>Corps</h4>
+                    <table>
+                        <thead><tr><th>Champ</th><th>Type</th><th></th><th>Détail</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>trip</code></td><td>int (id)</td><td><span class="badge req">requis</span></td><td>voyage ni annulé ni terminé</td></tr>
+                            <tr><td><code>seat_number</code></td><td>string</td><td><span class="badge opt">optionnel</span></td><td>auto-attribué si vide</td></tr>
+                            <tr><td><code>first_name</code></td><td>string</td><td><span class="badge opt">optionnel</span></td><td>défaut = prénom du compte</td></tr>
+                            <tr><td><code>last_name</code></td><td>string</td><td><span class="badge opt">optionnel</span></td><td>défaut = nom du compte</td></tr>
+                            <tr><td><code>phone</code></td><td>string</td><td><span class="badge opt">optionnel</span></td><td>défaut = téléphone du compte</td></tr>
+                        </tbody>
+                    </table>
+                    <pre><code>curl -X POST http://localhost:8000/api/v1/bookings/ \
+  -H "Authorization: Bearer &lt;access&gt;" \
+  -H "Content-Type: application/json" \
+  -d '{ "trip": 7 }'</code></pre>
+                    <h4>Réponse — <code>201 Created</code></h4>
+                    <p>Même structure que la lecture ci-dessus, statut <code>pending</code>.</p>
+                    <h4>Erreurs</h4>
+                    <p><code>400</code> voyage fermé à la réservation · <code>409 trip_full</code> complet ·
+                    <code>409 seat_taken</code> siège pris · <code>410 trip_unavailable</code> voyage annulé/terminé.</p>
+                </div>
+            </div>
+
+            <!-- cancel -->
+            <div class="endpoint" data-search="annuler cancel reservation rembourser siege liberer">
+                <div class="endpoint-head" id="ep-book-cancel">
+                    <span class="method post">POST</span>
+                    <span class="path">/bookings/{id}/cancel/</span>
+                    <span class="role-badge">Voyageur</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Annule une réservation et libère le siège. Un voyageur ne peut annuler que
+                    <strong>jusqu'à 2h avant le départ</strong>&nbsp;; les administrateurs annulent sans contrainte.</p>
+                    <pre><code>curl -X POST http://localhost:8000/api/v1/bookings/42/cancel/ \
+  -H "Authorization: Bearer &lt;access&gt;" \
+  -H "Content-Type: application/json" \
+  -d '{ "reason": "Changement de programme" }'</code></pre>
+                    <h4>Réponse — <code>200 OK</code></h4>
+                    <p>La réservation avec <code>status: "cancelled"</code>.</p>
+                    <p><code>409 cancellation_too_late</code> à moins de 2h du départ.</p>
+                </div>
+            </div>
+
+            <!-- ticket -->
+            <div class="endpoint" data-search="billet ticket pdf telecharger qr">
+                <div class="endpoint-head" id="ep-book-ticket">
+                    <span class="method get">GET</span>
+                    <span class="path">/bookings/{id}/ticket/</span>
+                    <span class="role-badge">Voyageur</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Télécharge le billet au format PDF (A6) incluant trajet, siège et QR code.</p>
+                    <pre><code>curl http://localhost:8000/api/v1/bookings/42/ticket/ \
+  -H "Authorization: Bearer &lt;access&gt;" -o billet_BF2026001234.pdf</code></pre>
+                    <p>Réponse&nbsp;: <code>200 OK</code>, <code>Content-Type: application/pdf</code> (pièce jointe).</p>
+                </div>
+            </div>
+
+            <h3>🏢 Guichet (agent)</h3>
+
+            <!-- agent create -->
+            <div class="endpoint" data-search="guichet agent vendre creer paye offline hors ligne">
+                <div class="endpoint-head" id="ep-agent-create">
+                    <span class="method post">POST</span>
+                    <span class="path">/agent/bookings/</span>
+                    <span class="role-badge">Agent guichet</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Enregistre une vente au guichet. La réservation est créée directement au statut <code>paid</code>.
+                    Le mode hors ligne est supporté&nbsp;: l'agent fournit son propre <code>ticket_number</code> et la date de saisie.</p>
+                    <h4>Corps</h4>
+                    <table>
+                        <thead><tr><th>Champ</th><th>Type</th><th></th><th>Détail</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>trip</code></td><td>int</td><td><span class="badge req">requis</span></td><td>voyage ouvert</td></tr>
+                            <tr><td><code>first_name</code></td><td>string</td><td><span class="badge req">requis</span></td><td></td></tr>
+                            <tr><td><code>last_name</code></td><td>string</td><td><span class="badge req">requis</span></td><td></td></tr>
+                            <tr><td><code>phone</code></td><td>string</td><td><span class="badge req">requis</span></td><td></td></tr>
+                            <tr><td><code>payment_method</code></td><td>string</td><td><span class="badge req">requis</span></td><td><code>cash</code>, <code>mobile_money</code>…</td></tr>
+                            <tr><td><code>transaction_ref</code></td><td>string</td><td><span class="badge opt">conditionnel</span></td><td>requis si paiement ≠ <code>cash</code></td></tr>
+                            <tr><td><code>seat_number</code></td><td>string</td><td><span class="badge opt">optionnel</span></td><td>auto si vide</td></tr>
+                            <tr><td><code>amount</code></td><td>decimal</td><td><span class="badge opt">optionnel</span></td><td>défaut = prix du voyage</td></tr>
+                            <tr><td><code>is_offline</code></td><td>bool</td><td><span class="badge opt">optionnel</span></td><td>défaut <code>false</code></td></tr>
+                            <tr><td><code>offline_created_at</code></td><td>datetime</td><td><span class="badge opt">conditionnel</span></td><td>requis si <code>is_offline=true</code></td></tr>
+                            <tr><td><code>ticket_number</code></td><td>string</td><td><span class="badge opt">optionnel</span></td><td>fourni par l'agent en offline</td></tr>
+                        </tbody>
+                    </table>
+                    <pre><code>curl -X POST http://localhost:8000/api/v1/agent/bookings/ \
+  -H "Authorization: Bearer &lt;access-agent&gt;" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "trip": 7,
+    "first_name": "Salif", "last_name": "Kabore",
+    "phone": "+22676000000",
+    "payment_method": "mobile_money",
+    "transaction_ref": "MP240702.1530.A12345"
+  }'</code></pre>
+                    <h4>Réponse — <code>201 Created</code></h4>
+                    <p>La réservation créée (statut <code>paid</code>).</p>
+                    <div class="warning"><strong>Mobile Money</strong>&nbsp;: la <code>transaction_ref</code> est saisie
+                    manuellement par l'agent (pas d'API opérateur directe pour l'instant).</div>
+                    <p><code>400</code> ref. manquante hors espèces / date offline manquante · <code>404</code> agent sans compagnie · <code>409</code>/<code>410</code> voyage complet/indisponible.</p>
+                </div>
+            </div>
+
+            <!-- agent get -->
+            <div class="endpoint" data-search="guichet chercher billet ticket number rechercher">
+                <div class="endpoint-head" id="ep-agent-get">
+                    <span class="method get">GET</span>
+                    <span class="path">/agent/bookings/{ticket_number}/</span>
+                    <span class="role-badge">Agent guichet</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Recherche un billet par son <code>ticket_number</code>, restreint à la compagnie de l'agent.</p>
+                    <pre><code>curl http://localhost:8000/api/v1/agent/bookings/BF2026001234/ \
+  -H "Authorization: Bearer &lt;access-agent&gt;"</code></pre>
+                    <p><code>404</code> billet hors de la compagnie de l'agent.</p>
+                </div>
+            </div>
+
+            <h3>🚏 Contrôle &amp; embarquement (contrôleur)</h3>
+
+            <!-- scan -->
+            <div class="endpoint" data-search="scan qr controleur feu tricolore embarquement statut">
+                <div class="endpoint-head" id="ep-scan">
+                    <span class="method post">POST</span>
+                    <span class="path">/agent/scan/</span>
+                    <span class="role-badge">Contrôleur</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Scanne un QR code (ou saisit un <code>ticket_number</code>) et renvoie un statut à code couleur
+                    de type feu tricolore, restreint à la compagnie du contrôleur.</p>
+                    <pre><code>curl -X POST http://localhost:8000/api/v1/agent/scan/ \
+  -H "Authorization: Bearer &lt;access-controleur&gt;" \
+  -H "Content-Type: application/json" \
+  -d '{ "qr_data": "BF2026001234" }'</code></pre>
+                    <h4>Réponse — <code>200 OK</code></h4>
+                    <pre><code>{
+  "status": "valid",
+  "color": "green",
+  "message": "Billet valide.",
+  "booking": {
+    "ticket_number": "BF2026001234",
+    "passenger_name": "Salif Kabore",
+    "seat_number": "12",
+    "status": "paid"
+  }
+}</code></pre>
+                    <table>
+                        <thead><tr><th><code>status</code></th><th><code>color</code></th><th>Cas</th></tr></thead>
+                        <tbody>
+                            <tr><td>valid</td><td>green</td><td>Payé, non embarqué</td></tr>
+                            <tr><td>already_boarded</td><td>orange</td><td>Payé, déjà embarqué</td></tr>
+                            <tr><td>unpaid</td><td>orange</td><td>Paiement non confirmé</td></tr>
+                            <tr><td>cancelled / refunded</td><td>red</td><td>Annulé / remboursé</td></tr>
+                        </tbody>
+                    </table>
+                    <p><code>400</code> <code>qr_data</code>/<code>ticket_number</code> manquant · <code>404</code> billet introuvable dans la compagnie.</p>
+                </div>
+            </div>
+
+            <!-- boarding -->
+            <div class="endpoint" data-search="embarquement boarding checkin cocher passager valider verrouiller">
+                <div class="endpoint-head" id="ep-boarding">
+                    <span class="method post">POST</span>
+                    <span class="path">/agent/trips/{trip_id}/boarding/…</span>
+                    <span class="role-badge">Contrôleur</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Trois opérations d'embarquement, toutes limitées aux voyages de la compagnie du contrôleur
+                    et aux réservations <code>paid</code>.</p>
+                    <table>
+                        <thead><tr><th>Route</th><th>Effet</th><th>Réponse</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>POST …/boarding/{booking_id}/</code></td><td>Coche un passager (idempotent)</td><td><code>201</code> l'embarquement</td></tr>
+                            <tr><td><code>POST …/boarding/all/</code></td><td>Embarque tous les payés (<code>confirm=true</code> requis)</td><td><code>200</code> <code>{ "boarded": N }</code></td></tr>
+                            <tr><td><code>POST …/boarding/validate/</code></td><td>Verrouille &amp; renvoie le récapitulatif</td><td><code>200</code> récap</td></tr>
+                        </tbody>
+                    </table>
+                    <pre><code># Cocher un passager
+curl -X POST http://localhost:8000/api/v1/agent/trips/7/boarding/42/ \
+  -H "Authorization: Bearer &lt;access-controleur&gt;"
+
+# Récapitulatif de verrouillage
+curl -X POST http://localhost:8000/api/v1/agent/trips/7/boarding/validate/ \
+  -H "Authorization: Bearer &lt;access-controleur&gt;"</code></pre>
+                    <h4>Réponse validate — <code>200 OK</code></h4>
+                    <pre><code>{ "trip": 7, "total_paid": 45, "boarded": 43, "not_boarded": 2, "locked": true }</code></pre>
+                    <p><code>400</code> <code>confirm</code> manquant (all) · <code>404</code> voyage/réservation hors périmètre.</p>
+                </div>
+            </div>
+
+            <h3>📈 Administration compagnie</h3>
+
+            <!-- company list + export -->
+            <div class="endpoint" data-search="compagnie admin liste export excel pdf csv filtres">
+                <div class="endpoint-head" id="ep-company">
+                    <span class="method get">GET</span>
+                    <span class="path">/company/bookings/</span>
+                    <span class="role-badge">Company admin</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Liste filtrable de toutes les réservations de la compagnie de l'admin, avec export.</p>
+                    <h4>Filtres (query params)</h4>
+                    <table>
+                        <thead><tr><th>Param</th><th>Effet</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>status</code></td><td>pending / paid / cancelled / refunded</td></tr>
+                            <tr><td><code>trip</code></td><td>id d'un voyage</td></tr>
+                            <tr><td><code>route</code></td><td>id d'une route</td></tr>
+                            <tr><td><code>payment_method</code></td><td>moyen de paiement</td></tr>
+                            <tr><td><code>date_from</code> / <code>date_to</code></td><td>période sur la date de départ (YYYY-MM-DD)</td></tr>
+                        </tbody>
+                    </table>
+                    <pre><code>curl "http://localhost:8000/api/v1/company/bookings/?status=paid&date_from=2026-07-01" \
+  -H "Authorization: Bearer &lt;access-admin&gt;"</code></pre>
+                    <h4>Export</h4>
+                    <p>Le sous-endpoint <code>GET /company/bookings/export/?format=excel|pdf</code> renvoie un fichier
+                    (Excel par défaut, repli CSV si openpyxl indisponible). Les mêmes filtres s'appliquent.</p>
+                    <pre><code>curl "http://localhost:8000/api/v1/company/bookings/export/?format=pdf&status=paid" \
+  -H "Authorization: Bearer &lt;access-admin&gt;" -o reservations.pdf</code></pre>
+                    <p><code>403</code> compagnie suspendue/rejetée · <code>404</code> admin sans compagnie.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================= -->
+        <!-- MODULE COMPANIES                                                -->
+        <!-- ============================================================= -->
+        <section id="mod-companies">
+            <h2>🏭 Module Companies</h2>
+            <p>Ce module gère le cycle de vie des <strong>compagnies de transport</strong>, unité centrale du modèle
+            multi-tenant&nbsp;: chaque agent, véhicule, trajet, voyage et réservation appartient <em>in fine</em> à une
+            compagnie. Une compagnie traverse plusieurs états — <code>pending</code> (demande à valider),
+            <code>active</code> (opérationnelle), <code>suspended</code> ou <code>rejected</code> (bloquée). Tant qu'une
+            compagnie n'est pas <em>active</em>, son administrateur ne peut rien faire&nbsp;; dès qu'elle est
+            <em>suspendue</em>, toutes ses opérations sont gelées (la permission <code>IsCompanyAdmin</code> le refuse).</p>
+
+            <p>Trois publics interagissent avec ce module&nbsp;: le <strong>super admin</strong> (création, validation,
+            suspension), le <strong>public</strong> (annuaire des compagnies actives) et le <strong>company admin</strong>
+            (paramètres de sa propre compagnie&nbsp;: charte graphique, moyens de paiement, préférences SMS).</p>
+
+            <h3>🛡️ Super admin — CRUD &amp; workflow de validation</h3>
+            <p>Le super admin dispose d'un CRUD complet sur toutes les compagnies. Il peut créer directement une compagnie
+            (elle est alors <em>active</em> d'emblée) ou traiter les demandes entrantes via un flux d'approbation dédié.</p>
+
+            <div class="endpoint" data-search="super compagnies crud liste creer commission">
+                <div class="endpoint-head">
+                    <span class="method get">GET</span><span class="method post">POST</span>
+                    <span class="method patch">PATCH</span><span class="method delete">DEL</span>
+                    <span class="path">/super/companies/</span>
+                    <span class="role-badge">Super admin</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">CRUD des compagnies. Filtrable (<code>?status=</code>, etc.). La création applique
+                    automatiquement le statut <code>active</code> et vérifie l'unicité du nom.</p>
+                    <p>Champs clés&nbsp;: <code>name</code>, <code>sigle</code>, <code>city</code>, <code>phone</code>,
+                    <code>email</code>, <code>responsible_name</code>, <code>rccm</code>, <code>ifu</code>,
+                    <code>commission_rate</code> (taux de commission plateforme, en %).</p>
+                </div>
+            </div>
+
+            <div class="endpoint" data-search="super compagnie activer suspendre activate suspend">
+                <div class="endpoint-head">
+                    <span class="method post">POST</span>
+                    <span class="path">/super/companies/{id}/activate/ · /suspend/</span>
+                    <span class="role-badge">Super admin</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Réactive ou suspend une compagnie. La suspension accepte un motif
+                    (<code>reason</code>) et gèle immédiatement l'accès de son administrateur.</p>
+                    <pre><code>curl -X POST http://localhost:8000/api/v1/super/companies/3/suspend/ \
+  -H "Authorization: Bearer &lt;access-super&gt;" \
+  -H "Content-Type: application/json" \
+  -d '{ "reason": "Documents RCCM expirés" }'</code></pre>
+                </div>
+            </div>
+
+            <div class="endpoint" data-search="demandes compagnie approuver rejeter approve reject requests">
+                <div class="endpoint-head">
+                    <span class="method get">GET</span><span class="method post">POST</span>
+                    <span class="path">/super/company-requests/ · /{id}/approve/ · /{id}/reject/</span>
+                    <span class="role-badge">Super admin</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Liste les demandes de création en attente (<code>status = pending</code>) et permet de
+                    les <strong>approuver</strong> (la compagnie devient active) ou de les <strong>rejeter</strong> avec un
+                    motif. C'est le point d'entrée du processus d'accréditation d'un nouveau transporteur.</p>
+                </div>
+            </div>
+
+            <h3>🌍 Public — annuaire des compagnies</h3>
+            <div class="endpoint" data-search="public compagnies liste detail annuaire actives">
+                <div class="endpoint-head">
+                    <span class="method get">GET</span>
+                    <span class="path">/public/companies/ · /public/companies/{id}/</span>
+                    <span class="role-badge public">Public</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Annuaire public des compagnies <strong>actives</strong> uniquement. La liste est mise en
+                    cache 1h côté serveur. Le détail ajoute le contact (téléphone, email) et, à terme, les avis clients.</p>
+                    <p>Réponse (liste)&nbsp;: <code>id</code>, <code>name</code>, <code>sigle</code>, <code>logo</code>,
+                    <code>description</code>, <code>city</code>, <code>rating</code> (note moyenne, quand l'app reviews est branchée).</p>
+                </div>
+            </div>
+
+            <h3>⚙️ Company admin — paramètres de sa compagnie</h3>
+            <p>Ces trois endpoints opèrent implicitement sur la compagnie de l'administrateur connecté&nbsp;: aucun
+            identifiant n'est passé dans l'URL, la compagnie est déduite du token. Ils illustrent le principe d'isolation
+            « je ne peux configurer que ma propre compagnie ».</p>
+
+            <div class="endpoint" data-search="company parametres settings charte graphique logo couleur">
+                <div class="endpoint-head">
+                    <span class="method get">GET</span><span class="method patch">PATCH</span>
+                    <span class="path">/company/settings/</span>
+                    <span class="role-badge">Company admin</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Consulte / met à jour l'identité et la charte graphique de la compagnie&nbsp;:
+                    <code>name</code>, <code>logo</code>, <code>banner</code>, <code>primary_color</code>,
+                    <code>welcome_message</code>, coordonnées et responsable.</p>
+                </div>
+            </div>
+
+            <div class="endpoint" data-search="company moyens paiement payment methods mobile money cash">
+                <div class="endpoint-head">
+                    <span class="method get">GET</span><span class="method patch">PATCH</span>
+                    <span class="path">/company/settings/payment-methods/</span>
+                    <span class="role-badge">Company admin</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Active ou désactive les moyens de paiement acceptés par la compagnie. Le
+                    <code>PATCH</code> reçoit une liste <code>[{ "method": "...", "is_active": true }]</code>&nbsp;;
+                    les méthodes inconnues sont ignorées silencieusement.</p>
+                    <pre><code>curl -X PATCH http://localhost:8000/api/v1/company/settings/payment-methods/ \
+  -H "Authorization: Bearer &lt;access-admin&gt;" \
+  -H "Content-Type: application/json" \
+  -d '{ "payment_methods": [
+        { "method": "cash", "is_active": true },
+        { "method": "orange_money", "is_active": true }
+      ] }'</code></pre>
+                </div>
+            </div>
+
+            <div class="endpoint" data-search="company notifications sms preferences rappel depart">
+                <div class="endpoint-head">
+                    <span class="method get">GET</span><span class="method patch">PATCH</span>
+                    <span class="path">/company/settings/notifications/</span>
+                    <span class="role-badge">Company admin</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Active/désactive les SMS automatiques&nbsp;: <code>sms_booking_confirmation</code>
+                    (confirmation de réservation), <code>sms_departure_reminder</code> (rappel avant départ),
+                    <code>sms_parcel_arrival</code> (arrivée de colis). Créés à la volée avec des valeurs par défaut.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================= -->
+        <!-- MODULE GEOGRAPHY                                                -->
+        <!-- ============================================================= -->
+        <section id="mod-geography">
+            <h2>🗺️ Module Geography</h2>
+            <p>Ce module fournit le référentiel géographique du réseau&nbsp;: les <strong>villes</strong> desservies et les
+            <strong>gares</strong> (stations) de chaque compagnie. Les villes sont un référentiel <em>partagé</em> par
+            toute la plateforme (créées par le super admin, consultées publiquement), tandis que les gares sont des
+            ressources <em>privées</em> propres à chaque compagnie.</p>
+
+            <div class="endpoint" data-search="villes cities liste publique region">
+                <div class="endpoint-head">
+                    <span class="method get">GET</span>
+                    <span class="path">/cities/</span>
+                    <span class="role-badge public">Public</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Liste de toutes les villes desservies (non paginée, cache 1h). Sert à alimenter les
+                    listes déroulantes de recherche de voyages. Réponse&nbsp;: <code>id</code>, <code>name</code>, <code>region</code>.</p>
+                </div>
+            </div>
+
+            <div class="endpoint" data-search="super villes creer city">
+                <div class="endpoint-head">
+                    <span class="method get">GET</span><span class="method post">POST</span>
+                    <span class="path">/super/cities/</span>
+                    <span class="role-badge">Super admin</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Le super admin ajoute une nouvelle ville au référentiel. Le nom doit être unique
+                    (comparaison insensible à la casse).</p>
+                </div>
+            </div>
+
+            <div class="endpoint" data-search="gares stations company crud ville adresse localisation">
+                <div class="endpoint-head">
+                    <span class="method get">GET</span><span class="method post">POST</span>
+                    <span class="method patch">PATCH</span><span class="method delete">DEL</span>
+                    <span class="path">/company/stations/</span>
+                    <span class="role-badge">Company admin</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">CRUD des gares de la compagnie de l'admin courant. La compagnie est automatiquement
+                    associée à la création&nbsp;; le queryset est filtré par compagnie (isolation stricte).</p>
+                    <p>Champs&nbsp;: <code>city</code>, <code>name</code>, <code>address</code>, <code>localisation</code>
+                    (coordonnées GPS), + <code>city_name</code> en lecture.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================= -->
+        <!-- MODULE VEHICLES                                                 -->
+        <!-- ============================================================= -->
+        <section id="mod-vehicles">
+            <h2>🚐 Module Vehicles</h2>
+            <p>Chaque compagnie gère son parc de <strong>véhicules</strong>. Un véhicule porte un nombre total de sièges
+            et un <strong>plan de sièges</strong> (<code>seat_plan</code>) au format JSON, qui décrit la disposition réelle
+            des places&nbsp;: c'est ce plan qui permet à l'auto-attribution et à l'affichage client de savoir quels sièges
+            existent et lesquels sont non commercialisables (chauffeur, hôtesse…). Le statut du véhicule
+            (<code>active</code> / <code>maintenance</code>) conditionne son affectation à des voyages.</p>
+
+            <div class="endpoint" data-search="vehicules vehicles crud immatriculation sieges type">
+                <div class="endpoint-head">
+                    <span class="method get">GET</span><span class="method post">POST</span>
+                    <span class="method patch">PATCH</span><span class="method delete">DEL</span>
+                    <span class="path">/company/vehicles/</span>
+                    <span class="role-badge">Company admin</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">CRUD du parc de la compagnie. Filtrable par <code>?status=</code> et
+                    <code>?vehicle_type=</code>. Le nombre de sièges doit être strictement positif.</p>
+                    <p>Champs&nbsp;: <code>registration</code>, <code>brand</code>, <code>model</code>,
+                    <code>vehicle_type</code>, <code>total_seats</code>. Le <code>status</code> et le <code>seat_plan</code>
+                    ne se modifient pas ici mais via les actions dédiées.</p>
+                </div>
+            </div>
+
+            <div class="endpoint" data-search="vehicule maintenance activer statut">
+                <div class="endpoint-head">
+                    <span class="method post">POST</span>
+                    <span class="path">/company/vehicles/{id}/maintenance/ · /activate/</span>
+                    <span class="role-badge">Company admin</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Bascule le véhicule en maintenance (indisponible pour de nouveaux voyages) ou le
+                    réactive. Réponse&nbsp;: le véhicule mis à jour.</p>
+                </div>
+            </div>
+
+            <div class="endpoint" data-search="vehicule plan sieges seat-plan layout reserved">
+                <div class="endpoint-head">
+                    <span class="method get">GET</span><span class="method patch">PUT</span>
+                    <span class="path">/company/vehicles/{id}/seat-plan/</span>
+                    <span class="role-badge">Company admin</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Lit ou remplace le plan des sièges du véhicule. Le <code>PUT</code> attend un
+                    <code>layout</code> (rangées de numéros) et une liste <code>reserved</code> optionnelle.</p>
+                    <pre><code>curl -X PUT http://localhost:8000/api/v1/company/vehicles/5/seat-plan/ \
+  -H "Authorization: Bearer &lt;access-admin&gt;" \
+  -H "Content-Type: application/json" \
+  -d '{ "layout": [[1,2],[3,4],[5,6]], "reserved": [1] }'</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================= -->
+        <!-- MODULE ROUTES                                                   -->
+        <!-- ============================================================= -->
+        <section id="mod-routes">
+            <h2>🛣️ Module Routes</h2>
+            <p>Une <strong>route</strong> (trajet type) relie une ville d'origine à une ville de destination, avec un prix de
+            base, une distance et une durée. Elle peut comporter des <strong>escales</strong> (<code>RouteStop</code>)
+            intermédiaires, chacune avec son propre tarif partiel. Les routes sont le gabarit à partir duquel on
+            <em>génère</em> ensuite des voyages datés (module Trips). Une route et son véhicule doivent appartenir à la
+            même compagnie.</p>
+
+            <div class="endpoint" data-search="routes trajets crud prix distance duree escales">
+                <div class="endpoint-head">
+                    <span class="method get">GET</span><span class="method post">POST</span>
+                    <span class="method patch">PATCH</span><span class="method delete">DEL</span>
+                    <span class="path">/company/routes/</span>
+                    <span class="role-badge">Company admin</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">CRUD des trajets de la compagnie. Filtrable par <code>?origin_city=</code>,
+                    <code>?destination_city=</code>, <code>?is_active=</code>. La ville de départ et d'arrivée doivent différer.</p>
+                    <p>Champs&nbsp;: <code>origin_city</code>, <code>destination_city</code>, <code>origin_station</code>,
+                    <code>destination_station</code>, <code>distance_km</code>, <code>base_price</code>,
+                    <code>duration_minutes</code>, <code>is_active</code>. Les <code>stops</code> sont renvoyés en lecture.</p>
+                </div>
+            </div>
+
+            <div class="endpoint" data-search="route dupliquer inverse retour duplicate aller retour">
+                <div class="endpoint-head">
+                    <span class="method post">POST</span>
+                    <span class="path">/company/routes/{id}/duplicate/</span>
+                    <span class="role-badge">Company admin</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Crée automatiquement le trajet <strong>retour</strong> (origine et destination inversées),
+                    ce qui évite de ressaisir un aller-retour. Réponse&nbsp;: <code>201</code> avec la route créée.</p>
+                </div>
+            </div>
+
+            <div class="endpoint" data-search="escales stops route imbrique ordre prix stop_order">
+                <div class="endpoint-head">
+                    <span class="method get">GET</span><span class="method post">POST</span>
+                    <span class="method patch">PATCH</span><span class="method delete">DEL</span>
+                    <span class="path">/company/routes/{route_pk}/stops/</span>
+                    <span class="role-badge">Company admin</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">CRUD des escales d'une route (ressource imbriquée). La route parente est déduite de
+                    l'URL et vérifiée contre la compagnie de l'admin.</p>
+                    <p>Champs&nbsp;: <code>city</code>, <code>stop_order</code> (ordre dans le trajet),
+                    <code>stop_price</code> (tarif jusqu'à cette escale).</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================= -->
+        <!-- MODULE TRIPS                                                    -->
+        <!-- ============================================================= -->
+        <section id="mod-trips">
+            <h2>🚌 Module Trips</h2>
+            <p>Un <strong>voyage</strong> (trip) est l'instance datée d'une route&nbsp;: une route + un véhicule + une heure de
+            départ. C'est l'objet que le voyageur réserve réellement. À la création, le nombre de places disponibles
+            (<code>available_seats</code>) est initialisé depuis le total de sièges du véhicule&nbsp;; il n'est ensuite
+            jamais fixé à la main mais décrémenté/incrémenté par les réservations sous verrou de ligne. Le prix reprend
+            par défaut le prix de base de la route.</p>
+
+            <p>Le module sert trois publics&nbsp;: le <strong>public</strong> (recherche &amp; détail), l'<strong>agent</strong>
+            (voyages du jour) et le <strong>company admin</strong> (CRUD + génération en masse).</p>
+
+            <h3>🔎 Public — recherche &amp; détail</h3>
+            <div class="endpoint" data-search="recherche voyages public search origin dest date passengers max_price direct">
+                <div class="endpoint-head">
+                    <span class="method get">GET</span>
+                    <span class="path">/trips/search/</span>
+                    <span class="role-badge public">Public</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Recherche des voyages à venir, programmés et ayant assez de places, triés par heure de
+                    départ. C'est le moteur de recherche de la page d'accueil.</p>
+                    <h4>Query params</h4>
+                    <table>
+                        <thead><tr><th>Param</th><th>Effet</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>origin_city</code></td><td>id de la ville de départ</td></tr>
+                            <tr><td><code>dest_city</code></td><td>id de la ville d'arrivée</td></tr>
+                            <tr><td><code>date</code></td><td>date de départ (YYYY-MM-DD)</td></tr>
+                            <tr><td><code>passengers</code></td><td>nombre de places minimum requis (entier)</td></tr>
+                            <tr><td><code>max_price</code></td><td>prix maximum</td></tr>
+                            <tr><td><code>direct</code></td><td><code>true</code> = trajets sans escale uniquement</td></tr>
+                        </tbody>
+                    </table>
+                    <pre><code>curl "http://localhost:8000/api/v1/trips/search/?origin_city=1&dest_city=2&date=2026-07-10&passengers=2"</code></pre>
+                </div>
+            </div>
+
+            <div class="endpoint" data-search="voyage detail public sieges disponibles available_seat_numbers">
+                <div class="endpoint-head">
+                    <span class="method get">GET</span>
+                    <span class="path">/trips/{id}/</span>
+                    <span class="role-badge public">Public</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Détail public d'un voyage, incluant la liste des numéros de sièges encore disponibles
+                    (<code>available_seat_numbers</code>) pour permettre au voyageur de choisir sa place.</p>
+                </div>
+            </div>
+
+            <h3>🧑‍✈️ Agent — voyages du jour</h3>
+            <div class="endpoint" data-search="agent voyages jour today gare vehicule">
+                <div class="endpoint-head">
+                    <span class="method get">GET</span>
+                    <span class="path">/agent/trips/today/</span>
+                    <span class="role-badge">Agent</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Liste (non paginée) des voyages du jour rattachés à la gare et/ou au véhicule de l'agent
+                    connecté. Sert de plan de travail quotidien au guichet et au contrôle.</p>
+                </div>
+            </div>
+
+            <h3>🏢 Company admin — gestion des voyages</h3>
+            <div class="endpoint" data-search="company voyages crud route statut date">
+                <div class="endpoint-head">
+                    <span class="method get">GET</span><span class="method post">POST</span>
+                    <span class="method patch">PATCH</span><span class="method delete">DEL</span>
+                    <span class="path">/company/trips/</span>
+                    <span class="role-badge">Company admin</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">CRUD des voyages de la compagnie. Filtrable par <code>?route=</code>,
+                    <code>?status=</code> et <code>?date=</code>. <strong>La suppression n'efface pas</strong>&nbsp;: elle
+                    annule le voyage (avec <code>reason</code>) et notifie les passagers.</p>
+                    <p>Champs (écriture)&nbsp;: <code>route</code>, <code>vehicle</code>, <code>departure_time</code>,
+                    <code>arrival_time</code>, <code>price</code> (optionnel). Le véhicule et la route doivent appartenir à
+                    la même compagnie.</p>
+                </div>
+            </div>
+
+            <div class="endpoint" data-search="voyages generer masse planning generate schedule_config days">
+                <div class="endpoint-head">
+                    <span class="method post">POST</span>
+                    <span class="path">/company/trips/generate/</span>
+                    <span class="role-badge">Company admin</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Génère en masse des voyages à partir d'une route et d'une grille horaire, sur un nombre
+                    de jours donné — idéal pour créer un planning hebdomadaire en une requête.</p>
+                    <pre><code>curl -X POST http://localhost:8000/api/v1/company/trips/generate/ \
+  -H "Authorization: Bearer &lt;access-admin&gt;" \
+  -H "Content-Type: application/json" \
+  -d '{ "route_id": 4, "schedule_config": ["08:00", "14:00"], "days": 7 }'</code></pre>
+                    <p>Réponse&nbsp;: <code>201</code> <code>{ "created": N, "trips": [...] }</code>.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================= -->
+        <!-- MODULE PAYMENTS                                                 -->
+        <!-- ============================================================= -->
+        <section id="mod-payments">
+            <h2>💳 Module Payments</h2>
+            <p>Ce module encaisse le paiement d'une réservation. Le flux est en <strong>deux temps</strong>&nbsp;: on
+            <em>initie</em> un paiement (statut <code>pending</code>), puis on le <em>confirme</em>. Comme il n'existe pas
+            encore d'intégration directe avec les opérateurs Mobile Money, la <strong>référence de transaction est saisie
+            manuellement</strong> par l'agent ou le voyageur. À la confirmation, la réservation liée passe à
+            <code>paid</code> et le SMS de confirmation part.</p>
+
+            <div class="danger"><strong>Donnée sensible</strong>&nbsp;: la <code>transaction_ref</code> n'est jamais renvoyée
+            en clair — l'API n'expose que ses 4 derniers caractères (<code>****1234</code>).</div>
+
+            <div class="endpoint" data-search="paiement initier creer booking method phone pending">
+                <div class="endpoint-head">
+                    <span class="method post">POST</span>
+                    <span class="path">/payments/</span>
+                    <span class="role-badge">Authentifié</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Initie un paiement pour une réservation. Reste <code>pending</code> jusqu'à confirmation.</p>
+                    <table>
+                        <thead><tr><th>Champ</th><th>Type</th><th></th></tr></thead>
+                        <tbody>
+                            <tr><td><code>booking_id</code></td><td>int</td><td><span class="badge req">requis</span></td></tr>
+                            <tr><td><code>method</code></td><td>choix</td><td><span class="badge req">requis</span></td></tr>
+                            <tr><td><code>phone</code></td><td>string</td><td><span class="badge opt">optionnel</span></td></tr>
+                        </tbody>
+                    </table>
+                    <p><em>Le paiement de colis (<code>parcel_id</code>) n'est pas encore disponible.</em></p>
+                </div>
+            </div>
+
+            <div class="endpoint" data-search="paiement confirmer verify transaction_ref recu receipt">
+                <div class="endpoint-head">
+                    <span class="method post">POST</span><span class="method get">GET</span>
+                    <span class="path">/payments/{id}/verify/ · /{id}/receipt/</span>
+                    <span class="role-badge">Authentifié</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc"><code>verify</code> confirme le paiement (saisie de <code>transaction_ref</code>) et bascule
+                    la réservation en <code>paid</code>. <code>receipt</code> télécharge le reçu au format PDF.
+                    Chaque utilisateur ne voit que les paiements de son périmètre (voyageur&nbsp;: ses réservations&nbsp;;
+                    agent/admin&nbsp;: sa compagnie&nbsp;; super admin&nbsp;: tout).</p>
+                </div>
+            </div>
+
+            <div class="endpoint" data-search="agent paiement guichet encaisser initier confirmer une etape">
+                <div class="endpoint-head">
+                    <span class="method post">POST</span>
+                    <span class="path">/agent/payments/</span>
+                    <span class="role-badge">Agent guichet</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Encaissement au guichet en <strong>une seule étape</strong> (initiation + confirmation).
+                    La <code>transaction_ref</code> est requise hors espèces. L'agent ne peut encaisser que pour sa compagnie.</p>
+                    <pre><code>curl -X POST http://localhost:8000/api/v1/agent/payments/ \
+  -H "Authorization: Bearer &lt;access-agent&gt;" \
+  -H "Content-Type: application/json" \
+  -d '{ "booking_id": 42, "method": "cash" }'</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================= -->
+        <!-- MODULE PARCELS                                                  -->
+        <!-- ============================================================= -->
+        <section id="mod-parcels">
+            <h2>📦 Module Parcels</h2>
+            <p>Au-delà des voyageurs, les compagnies transportent aussi des <strong>colis</strong>. Ce module couvre tout leur
+            cycle&nbsp;: enregistrement au guichet, calcul automatique du tarif, suivi public par numéro de suivi,
+            notification du destinataire à l'arrivée, puis remise. Le tarif est calculé par le service selon le poids et la
+            tranche de distance (jamais fourni par le client)&nbsp;; le mode hors ligne est supporté.</p>
+
+            <div class="info"><strong>Suivi public sécurisé</strong>&nbsp;: le suivi utilise le <code>tracking_number</code>
+            (jamais l'id) et masque le téléphone du destinataire (<code>******45</code>).</div>
+
+            <div class="endpoint" data-search="colis suivi public track tracking historique statut">
+                <div class="endpoint-head">
+                    <span class="method get">GET</span>
+                    <span class="path">/parcels/track/{tracking_number}/</span>
+                    <span class="role-badge public">Public</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Suivi public d'un colis&nbsp;: statut courant + historique des événements (enregistré,
+                    notifié, remis), sans exposer de données sensibles.</p>
+                    <pre><code>curl http://localhost:8000/api/v1/parcels/track/CB2026000123/</code></pre>
+                </div>
+            </div>
+
+            <div class="endpoint" data-search="agent colis enregistrer creer guichet tarif offline arrivals notify">
+                <div class="endpoint-head">
+                    <span class="method get">GET</span><span class="method post">POST</span>
+                    <span class="path">/agent/parcels/ · /{id}/notify/ · /arrivals/</span>
+                    <span class="role-badge">Agent guichet</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Enregistre un colis au guichet (compagnie &amp; gare de départ déduites du profil agent,
+                    tarif calculé par le service). <code>arrivals</code> liste les colis arrivés à la gare de l'agent en
+                    attente de notification&nbsp;; <code>notify</code> envoie le SMS au destinataire (ou enregistre un appel manuel).</p>
+                    <p>Champs création&nbsp;: <code>origin_city</code>, <code>destination_city</code>,
+                    <code>destination_station</code>, <code>sender_name/phone</code>, <code>recipient_name/phone</code>,
+                    <code>weight_kg</code>, <code>description</code>, + <code>is_offline</code>/<code>offline_created_at</code>.</p>
+                </div>
+            </div>
+
+            <div class="endpoint" data-search="company colis liste statut update notify-again export">
+                <div class="endpoint-head">
+                    <span class="method get">GET</span><span class="method patch">PATCH</span>
+                    <span class="method post">POST</span>
+                    <span class="path">/company/parcels/ · /{id}/status/ · /{id}/notify-again/ · /export/</span>
+                    <span class="role-badge">Company admin</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Vue compagnie de tous les colis (filtrable). Permet de corriger les informations
+                    (<code>PATCH</code>), de forcer un changement de statut (<code>status</code>), de renvoyer le SMS d'arrivée
+                    (<code>notify-again</code>) et d'exporter la liste en Excel/PDF (<code>?format=</code>).</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================= -->
+        <!-- MODULE CLAIMS                                                   -->
+        <!-- ============================================================= -->
+        <section id="mod-claims">
+            <h2>📣 Module Claims</h2>
+            <p>Les <strong>réclamations</strong> permettent aux voyageurs de signaler un problème (retard, bagage, service…),
+            éventuellement rattaché à une réservation. Le traitement suit une hiérarchie&nbsp;: la compagnie répond en
+            première ligne&nbsp;; le super admin supervise et peut relancer (escalade) ou clôturer. Une réclamation sans
+            réponse au-delà de <strong>48h</strong> est signalée comme <code>is_overdue</code> (indicateur calculé,
+            non stocké), ce qui fait remonter les dossiers en retard en tête de liste.</p>
+
+            <div class="endpoint" data-search="reclamation voyageur deposer creer liste claim type sujet">
+                <div class="endpoint-head">
+                    <span class="method get">GET</span><span class="method post">POST</span>
+                    <span class="path">/claims/</span>
+                    <span class="role-badge">Voyageur</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Dépose (POST) et consulte (GET) ses propres réclamations. La compagnie visée est soit
+                    fournie, soit déduite de la réservation référencée — qui doit appartenir au voyageur.</p>
+                    <p>Champs&nbsp;: <code>company</code> (ou <code>booking</code>), <code>claim_type</code>,
+                    <code>subject</code>, <code>description</code>.</p>
+                </div>
+            </div>
+
+            <div class="endpoint" data-search="company reclamations repondre respond stats resolution delai">
+                <div class="endpoint-head">
+                    <span class="method get">GET</span><span class="method post">POST</span>
+                    <span class="path">/company/claims/ · /{id}/respond/ · /stats/</span>
+                    <span class="role-badge">Company admin</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Réclamations reçues par la compagnie (les non traitées d'abord). <code>respond</code>
+                    apporte une réponse et change le statut&nbsp;; <code>stats</code> donne le taux de résolution et le délai
+                    moyen de traitement.</p>
+                </div>
+            </div>
+
+            <div class="endpoint" data-search="super reclamations unresolved escalade escalate cloturer close">
+                <div class="endpoint-head">
+                    <span class="method get">GET</span><span class="method post">POST</span>
+                    <span class="path">/super/claims/ · /unresolved/ · /{id}/escalate/ · /{id}/close/</span>
+                    <span class="role-badge">Super admin</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Supervision transverse. <code>unresolved</code> liste les dossiers non traités toutes
+                    compagnies&nbsp;; <code>escalate</code> relance la compagnie&nbsp;; <code>close</code> clôture directement.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================= -->
+        <!-- MODULE REVIEWS                                                  -->
+        <!-- ============================================================= -->
+        <section id="mod-reviews">
+            <h2>⭐ Module Reviews</h2>
+            <p>Les <strong>avis</strong> notent une compagnie (de 1 à 5) après un voyage. Une règle métier stricte
+            s'applique&nbsp;: un avis n'est possible que si le voyage est <code>completed</code> <em>et</em> que le voyageur y a
+            une réservation payée (validé dans le service). Les avis publics n'exposent que le prénom et l'initiale du nom
+            de l'auteur. La compagnie peut répondre publiquement et <em>signaler</em> un avis abusif (qui disparaît alors des
+            listes publiques), mais <strong>ne peut jamais le supprimer</strong> — seul le super admin le peut.</p>
+
+            <div class="endpoint" data-search="avis reviews public liste deposer creer note rating commentaire">
+                <div class="endpoint-head">
+                    <span class="method get">GET</span><span class="method post">POST</span>
+                    <span class="path">/reviews/</span>
+                    <span class="role-badge public">Public / Voyageur</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">La lecture est publique (avis non signalés, filtrables par <code>?company_id=</code>) ;
+                    le dépôt exige le rôle voyageur. Champs création&nbsp;: <code>trip</code>, <code>rating</code> (1–5),
+                    <code>comment</code>.</p>
+                </div>
+            </div>
+
+            <div class="endpoint" data-search="company avis repondre respond flag signaler word-cloud nuage mots">
+                <div class="endpoint-head">
+                    <span class="method get">GET</span><span class="method post">POST</span>
+                    <span class="method patch">PATCH</span>
+                    <span class="path">/company/reviews/ · /{id}/respond/ · /{id}/flag/ · /word-cloud/</span>
+                    <span class="role-badge">Company admin</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Tous les avis de la compagnie (signalés inclus). <code>respond</code> répond
+                    publiquement&nbsp;; <code>flag</code> signale un avis au super admin&nbsp;; <code>word-cloud</code> renvoie la
+                    fréquence des mots pour une analyse qualitative. <code>DELETE</code> renvoie <code>405</code> (interdit).</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================= -->
+        <!-- MODULE SPEED REPORTS                                            -->
+        <!-- ============================================================= -->
+        <section id="mod-speed">
+            <h2>🚨 Module Speed Reports</h2>
+            <p>Ce module de sécurité routière permet à un voyageur de <strong>signaler un excès de vitesse</strong> pendant
+            son trajet, avec une vitesse estimée, une description et, si disponibles, des coordonnées GPS. Les signalements
+            remontent à la compagnie concernée (consultation) et au super admin, qui pilote leur traitement en changeant
+            leur statut. C'est un canal de responsabilisation des transporteurs.</p>
+
+            <div class="endpoint" data-search="signalement vitesse deposer creer voyageur speed report gps">
+                <div class="endpoint-head">
+                    <span class="method post">POST</span>
+                    <span class="path">/speed-reports/</span>
+                    <span class="role-badge">Voyageur</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Dépose un signalement. Horodatage automatique&nbsp;; GPS optionnel.</p>
+                    <p>Champs&nbsp;: <code>company</code>, <code>trip</code> (optionnel), <code>estimated_speed</code>,
+                    <code>description</code>, <code>latitude</code>, <code>longitude</code>.</p>
+                </div>
+            </div>
+
+            <div class="endpoint" data-search="company signalements liste consulter speed">
+                <div class="endpoint-head">
+                    <span class="method get">GET</span>
+                    <span class="path">/company/speed-reports/</span>
+                    <span class="role-badge">Company admin</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Consultation (lecture seule) des signalements visant la compagnie de l'admin courant.</p>
+                </div>
+            </div>
+
+            <div class="endpoint" data-search="super signalements statut traiter update speed">
+                <div class="endpoint-head">
+                    <span class="method get">GET</span><span class="method patch">PATCH</span>
+                    <span class="path">/super/speed-reports/ · /{id}/</span>
+                    <span class="role-badge">Super admin</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Tous les signalements de la plateforme. Le <code>PATCH</code> fait évoluer le statut du
+                    dossier (en cours de traitement, résolu, etc.).</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================= -->
+        <!-- MODULE MESSAGING                                                -->
+        <!-- ============================================================= -->
+        <section id="mod-messaging">
+            <h2>💬 Module Messaging</h2>
+            <p>La messagerie interne permet des échanges directs entre utilisateurs (par ex. un agent contactant un
+            voyageur). Chaque utilisateur voit sa boîte (messages envoyés et reçus)&nbsp;; l'ouverture d'un message reçu le
+            marque automatiquement comme lu. Pour les agents, l'objet du message est obligatoire. Un endpoint dédié fournit
+            la <strong>liste des passagers</strong> d'un voyage pour faciliter le choix du destinataire.</p>
+
+            <div class="endpoint" data-search="messages messagerie envoyer liste lire inbox destinataire objet">
+                <div class="endpoint-head">
+                    <span class="method get">GET</span><span class="method post">POST</span>
+                    <span class="path">/messages/ · /messages/{id}/</span>
+                    <span class="role-badge">Authentifié</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Liste la boîte de l'utilisateur, envoie un message (<code>recipient</code>,
+                    <code>subject</code>, <code>body</code>) et lit un message (marqué lu à l'ouverture). On ne peut pas
+                    s'écrire à soi-même.</p>
+                </div>
+            </div>
+
+            <div class="endpoint" data-search="agent liste passagers voyage passenger-list destinataire">
+                <div class="endpoint-head">
+                    <span class="method get">GET</span>
+                    <span class="path">/agent/trips/{trip_id}/passenger-list/</span>
+                    <span class="role-badge">Agent</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Liste des passagers d'un voyage (id, nom complet, téléphone), restreinte à la compagnie de
+                    l'agent. Pratique pour sélectionner un destinataire ou contacter les voyageurs d'un départ.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================= -->
+        <!-- MODULE NOTIFICATIONS                                            -->
+        <!-- ============================================================= -->
+        <section id="mod-notifications">
+            <h2>🔔 Module Notifications</h2>
+            <p>Les <strong>notifications in-app</strong> informent l'utilisateur d'événements le concernant (réservation
+            confirmée, colis arrivé, réponse à une réclamation…). Elles sont propres à chaque utilisateur, triées avec les
+            non lues en premier, et peuvent être marquées comme lues individuellement ou en bloc. Chaque notification porte
+            une référence (<code>reference_id</code> / <code>reference_type</code>) permettant au client de rebondir vers
+            l'objet concerné.</p>
+
+            <div class="endpoint" data-search="notifications liste lire read read-all marquer lu">
+                <div class="endpoint-head">
+                    <span class="method get">GET</span><span class="method post">POST</span>
+                    <span class="path">/notifications/ · /{id}/read/ · /read-all/</span>
+                    <span class="role-badge">Authentifié</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Liste les notifications de l'utilisateur (non lues d'abord). <code>read</code> marque une
+                    notification comme lue&nbsp;; <code>read-all</code> les marque toutes et renvoie le nombre mis à jour.</p>
+                    <pre><code>curl -X POST http://localhost:8000/api/v1/notifications/read-all/ \
+  -H "Authorization: Bearer &lt;access&gt;"
+# → { "updated": 5 }</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================= -->
+        <!-- MODULE SYNC                                                     -->
+        <!-- ============================================================= -->
+        <section id="mod-sync">
+            <h2>📶 Module Sync — mode hors ligne</h2>
+            <p>C'est la pierre angulaire de la contrainte métier « les agents travaillent sans internet ». Le module permet
+            à un agent de récupérer un <strong>paquet de travail</strong> quand il a du réseau, de travailler hors ligne toute
+            la journée (ventes, colis, embarquements enregistrés localement), puis de <strong>synchroniser</strong> le tout en
+            un seul appel atomique dès que la connexion revient.</p>
+
+            <div class="highlight"><strong>Idempotence &amp; résolution de conflits</strong>&nbsp;: le
+            <code>ticket_number</code> / <code>tracking_number</code> généré localement sert de clé d'idempotence. En cas de
+            conflit de siège (deux agents ayant vendu la même place hors ligne), le serveur <strong>réattribue
+            automatiquement</strong> le prochain siège libre et journalise le conflit en français.</div>
+
+            <div class="endpoint" data-search="offline data paquet travail hors ligne voyages reservations colis">
+                <div class="endpoint-head">
+                    <span class="method get">GET</span>
+                    <span class="path">/agent/offline-data/</span>
+                    <span class="role-badge">Agent</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Renvoie le paquet de travail du jour&nbsp;: voyages (avec plan de sièges), réservations
+                    associées et colis arrivés en attente de remise. À télécharger avant de passer hors ligne.</p>
+                    <pre><code>{ "trips": [...], "bookings": [...], "parcel_arrivals": [...] }</code></pre>
+                </div>
+            </div>
+
+            <div class="endpoint" data-search="sync synchroniser batch atomique bookings parcels validations">
+                <div class="endpoint-head">
+                    <span class="method post">POST</span>
+                    <span class="path">/agent/sync/</span>
+                    <span class="role-badge">Agent</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Synchronise en une transaction atomique les lots saisis hors ligne&nbsp;:
+                    <code>bookings</code>, <code>parcels</code>, <code>validations</code> (embarquements). Chaque élément
+                    porte son <code>offline_created_at</code> et son numéro généré localement.</p>
+                    <pre><code>curl -X POST http://localhost:8000/api/v1/agent/sync/ \
+  -H "Authorization: Bearer &lt;access-agent&gt;" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "bookings": [
+      { "ticket_number": "BF2026009001", "trip_id": 7,
+        "first_name": "Ali", "last_name": "Traore", "phone": "+22670000001",
+        "offline_created_at": "2026-07-02T09:30:00Z" }
+    ],
+    "parcels": [], "validations": []
+  }'</code></pre>
+                    <h4>Réponse — <code>200 OK</code></h4>
+                    <pre><code>{
+  "synced": { "bookings": 1, "parcels": 0, "validations": 0 },
+  "conflicts": [
+    { "entity": "booking", "reference": "BF2026009001",
+      "original_seat": "12", "assigned_seat": "15",
+      "resolution": "Siege 12 deja pris, reattribue au 15." }
+  ],
+  "errors": []
+}</code></pre>
+                </div>
+            </div>
+
+            <div class="endpoint" data-search="sync logs journal historique conflits">
+                <div class="endpoint-head">
+                    <span class="method get">GET</span>
+                    <span class="path">/agent/sync/logs/ · /agent/sync/conflicts/</span>
+                    <span class="role-badge">Agent</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc"><code>logs</code> retourne l'historique des synchronisations (compteurs + conflits par
+                    session)&nbsp;; <code>conflicts</code> retourne les conflits résolus lors de la <strong>dernière</strong>
+                    synchronisation, pour affichage immédiat à l'agent.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================= -->
+        <!-- MODULE DASHBOARD                                                -->
+        <!-- ============================================================= -->
+        <section id="mod-dashboard">
+            <h2>📊 Module Dashboard</h2>
+            <p>Ce module regroupe des endpoints <strong>en lecture seule</strong> qui agrègent des indicateurs pour chaque
+            type d'utilisateur. Il ne possède aucun modèle propre&nbsp;: chaque vue délègue les calculs à
+            <code>services.py</code>. Toutes les réponses sont mises en cache 5 minutes et <em>varient sur l'en-tête
+            Authorization</em>, garantissant qu'un cache n'est jamais servi d'un utilisateur à un autre (isolation
+            multi-tenant préservée).</p>
+
+            <p>Les tableaux de bord compagnie et super acceptent une période via <code>?period=day|week|month</code> ou une
+            plage explicite <code>?start_date=&amp;end_date=</code> (format <code>AAAA-MM-JJ</code>).</p>
+
+            <div class="feature-grid">
+                <div class="feature-card"><h4>🧳 Voyageur</h4>
+                    <p><code>GET /dashboard/traveler/</code> — prochains voyages, nombre de réservations actives / en attente,
+                    dernières notifications.</p></div>
+                <div class="feature-card"><h4>🧑‍✈️ Agent</h4>
+                    <p><code>GET /agent/dashboard/</code> — prochains départs, alertes en attente, statut de connexion.</p></div>
+                <div class="feature-card"><h4>🏢 Company admin</h4>
+                    <p><code>GET /company/dashboard/</code> — KPI (recette, taux de remplissage, réservations, note) avec
+                    comparaison à la période précédente.</p></div>
+                <div class="feature-card"><h4>🛡️ Super admin</h4>
+                    <p><code>GET /super/dashboard/</code> — vue plateforme&nbsp;: compagnies, réservations, commission, utilisateurs actifs.</p></div>
+            </div>
+
+            <div class="endpoint" data-search="company dashboard graphiques revenue-chart fill-rate payment-breakdown top-routes agent-activity alerts">
+                <div class="endpoint-head">
+                    <span class="method get">GET</span>
+                    <span class="path">/company/dashboard/{revenue-chart|fill-rate-by-route|payment-breakdown|top-routes|agent-activity|alerts}/</span>
+                    <span class="role-badge">Company admin</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Séries et répartitions détaillées de la compagnie&nbsp;: recettes dans le temps, taux de
+                    remplissage par trajet, répartition des paiements, top 5 des trajets, activité du jour par agent, et
+                    compteurs d'alertes opérationnelles (réclamations non résolues, colis non remis, signalements en attente).</p>
+                </div>
+            </div>
+
+            <div class="endpoint" data-search="company dashboard export pdf excel rapport">
+                <div class="endpoint-head">
+                    <span class="method get">GET</span>
+                    <span class="path">/company/dashboard/export/?format=pdf|excel</span>
+                    <span class="role-badge">Company admin</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Rapport complet (synthèse + top trajets + paiements) généré à la volée en Excel ou PDF
+                    (repli CSV si openpyxl absent). Non mis en cache.</p>
+                </div>
+            </div>
+
+            <div class="endpoint" data-search="super dashboard revenue-by-company bookings-chart graphiques plateforme">
+                <div class="endpoint-head">
+                    <span class="method get">GET</span>
+                    <span class="path">/super/dashboard/{revenue-by-company|bookings-chart}/</span>
+                    <span class="role-badge">Super admin</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="desc">Vues transverses&nbsp;: recettes et commissions par compagnie, et évolution du volume
+                    global de réservations dans le temps.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================= -->
+        <!-- AMÉLIORATIONS                                                   -->
+        <!-- ============================================================= -->
+        <section id="improvements">
+            <h2>💡 Améliorations proposées</h2>
+            <p>Pistes issues de la lecture du code, à valider avec l'équipe avant implémentation&nbsp;:</p>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>📄 OpenAPI / Swagger UI</h4>
+                    <p><code>drf-spectacular</code> est déjà utilisé (<code>@extend_schema</code>). Exposer
+                    <code>/api/v1/schema/</code> + Swagger UI &amp; Redoc génère une doc interactive « essayez-la » toujours à jour.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>🔁 Idempotency-Key</h4>
+                    <p>Sur <code>POST /bookings/</code> et <code>/agent/bookings/</code>, accepter un en-tête
+                    <code>Idempotency-Key</code> évite les doublons en cas de retry réseau (fréquent en connexion instable).</p>
+                </div>
+                <div class="feature-card">
+                    <h4>📶 Endpoint /health &amp; /version</h4>
+                    <p>Utile pour le monitoring et pour que les apps agents détectent le retour de connexion avant de synchroniser.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>🌐 i18n des messages</h4>
+                    <p>Les messages sont en français non accentué (« Paye »). Passer par <code>gettext</code> permettrait
+                    accents corrects + support mooré/dioula à terme.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>🔎 Recherche &amp; tri voyageur</h4>
+                    <p>Ajouter <code>?status=</code> et un tri sur <code>/bookings/</code> côté voyageur (aujourd'hui seul l'admin filtre).</p>
+                </div>
+                <div class="feature-card">
+                    <h4>🧾 Pagination de l'export</h4>
+                    <p>L'export itère tout le queryset en mémoire. Un export asynchrone via Celery (déjà présent) + lien
+                    de téléchargement éviterait les timeouts sur gros volumes.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>⏱️ Rate limiting élargi</h4>
+                    <p>Étendre le throttling au scan et à la création de réservation pour limiter l'abus, avec en-têtes
+                    <code>Retry-After</code> normalisés sur les 429.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>🔐 Réponses d'erreur unifiées</h4>
+                    <p>Un <em>exception handler</em> DRF renvoyant toujours <code>{ "code", "detail", "field_errors" }</code>
+                    faciliterait la gestion d'erreurs côté clients mobiles.</p>
+                </div>
+            </div>
+
+            <div class="highlight">
+                <strong>Couverture&nbsp;:</strong> cette documentation couvre désormais l'ensemble des modules exposant une
+                API — Users, Bookings, Companies, Geography, Vehicles, Routes, Trips, Payments, Parcels, Claims, Reviews,
+                Speed Reports, Messaging, Notifications, Sync et Dashboard. Le module <code>subscriptions</code> n'expose
+                pas encore d'endpoints (modèles internes uniquement).
+            </div>
+        </section>
+    </main>
+</div>
+
+<footer>
+    <p><strong>TransBooking BF</strong> — Documentation complète de l'API REST · 16 modules</p>
+    <p>Plateforme de gestion du transport interurbain au Burkina Faso · API v1</p>
+</footer>
+
+<script>
+    // Filtre live des cartes endpoint + surlignage des sections vides.
+    const box = document.getElementById('searchBox');
+    const cards = Array.from(document.querySelectorAll('.endpoint'));
+    box.addEventListener('input', () => {
+        const q = box.value.trim().toLowerCase();
+        cards.forEach(card => {
+            const hay = (card.dataset.search + ' ' + card.textContent).toLowerCase();
+            card.classList.toggle('hidden', q !== '' && !hay.includes(q));
+        });
+    });
+</script>
+</body>
+</html>

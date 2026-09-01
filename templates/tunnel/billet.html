@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% load transbooking %}
+{% block titre %}Billet {{ reservation.ticket_number }} — TransBooking BF{% endblock %}
+
+{% block contenu %}
+<div class="zone-etroite" style="padding:32px 0 48px">
+
+  {% if reservation.status == 'pending' %}
+    <div class="bandeau b-att" style="margin-bottom:18px">
+      <span class="ic">!</span>
+      <div>
+        <b>Réglement au guichet.</b> Votre place est retenue. Présentez le numéro
+        <span class="code">{{ reservation.ticket_number }}</span> à l'agence pour payer en espèces.
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="billet-page carte">
+    <div class="billet-haut">
+      <div class="rang">
+        <span class="sigle" style="background:{{ trajet.route.company.primary_color|couleur_sure }}">
+          {% if trajet.route.company.sigle %}{{ trajet.route.company.sigle|initiales }}{% else %}{{ trajet.route.company.name|initiales }}{% endif %}
+        </span>
+        <div>
+          <b style="font-size:16px">{{ trajet.route.company.name }}</b>
+          <div class="mini">Billet n° <span class="code">{{ reservation.ticket_number }}</span></div>
+        </div>
+        <span class="etiq {% if reservation.status == 'paid' %}e-ok{% else %}e-att{% endif %} fin">{{ statut }}</span>
+      </div>
+
+      <div class="parcours" style="margin-top:20px">
+        <div>
+          <div class="h">{{ trajet.departure_time|time:"H:i" }}</div>
+          <div class="lieu">{{ trajet.route.origin_city.name }}</div>
+        </div>
+        <div class="milieu">
+          <div class="d">{{ trajet.departure_time|duree_entre:trajet.arrival_time }}</div>
+          <div class="trace"></div>
+        </div>
+        <div>
+          <div class="h">{% if trajet.arrival_time %}{{ trajet.arrival_time|time:"H:i" }}{% else %}—{% endif %}</div>
+          <div class="lieu">{{ trajet.route.destination_city.name }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="perfore"></div>
+
+    <div class="billet-bas">
+      <div class="grille g2" style="gap:10px 20px">
+        <div class="billet-rang"><span class="gris">Passager</span>
+          <b>{{ reservation.first_name }} {{ reservation.last_name }}</b></div>
+        <div class="billet-rang"><span class="gris">Siège</span><b>{{ reservation.seat_number }}</b></div>
+        <div class="billet-rang"><span class="gris">Date</span>
+          <b>{{ trajet.departure_time|date:"D j M Y" }}</b></div>
+        <div class="billet-rang"><span class="gris">Gare de départ</span>
+          <b>{{ trajet.route.origin_station.name|default:trajet.route.origin_city.name }}</b></div>
+        <div class="billet-rang"><span class="gris">Téléphone</span><b>{{ reservation.phone }}</b></div>
+        <div class="billet-rang"><span class="gris">Montant</span>
+          <b>{{ reservation.amount|fcfa }} FCFA</b></div>
+      </div>
+
+      {% if reservation.qr_code %}
+        <div style="text-align:center;margin-top:20px">
+          {% comment %}
+            `generate_qr` renvoie du base64 nu, sans le préfixe `data:` — on le
+            pose ici plutôt que de modifier une fonction dont l'API mobile
+            dépend aussi. Les commentaires `{# #}` de Django tiennent sur une
+            seule ligne : sur plusieurs, ils s'affichent tels quels à l'écran.
+          {% endcomment %}
+          <img src="data:image/png;base64,{{ reservation.qr_code }}"
+               alt="Code de contrôle du billet"
+               width="176" height="176" style="margin:0 auto;border-radius:8px">
+          <p class="micro" style="margin-top:8px">
+            À présenter à l'embarquement. Il fonctionne sans réseau.
+          </p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="rang" style="margin-top:20px;justify-content:center;gap:10px">
+    <button class="btn btn-s btn-sm" type="button" onclick="window.print()">Imprimer</button>
+    <a class="btn btn-s btn-sm" href="{% url 'web:accueil' %}">Nouvelle recherche</a>
+  </div>
+
+  <p class="micro" style="text-align:center;margin-top:14px">
+    Conservez ce lien : il rouvre votre billet à tout moment, sans connexion à un compte.
+  </p>
+</div>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% comment %}
+Indicateur d'etapes du tunnel : `etape` vaut 1, 2 ou 3.
+
+Il informe, il ne navigue pas. Une fois la reservation creee, revenir en
+arriere demanderait de liberer la place : ce sont des liens qu'on n'offre pas
+a la legere.
+{% endcomment %}
+<ol class="etapes" aria-label="Progression de la réservation">
+  <li class="{% if etape > 1 %}faite{% elif etape == 1 %}courante{% endif %}">
+    <span class="pastille">{% if etape > 1 %}✓{% else %}1{% endif %}</span>Trajet
+  </li>
+  <li class="{% if etape > 2 %}faite{% elif etape == 2 %}courante{% endif %}">
+    <span class="pastille">{% if etape > 2 %}✓{% else %}2{% endif %}</span>Passager
+  </li>
+  <li class="{% if etape > 3 %}faite{% elif etape == 3 %}courante{% endif %}">
+    <span class="pastille">3</span>Paiement
+  </li>
+</ol>

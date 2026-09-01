@@ -1,0 +1,46 @@
+{% comment %}
+Fragment interroge en boucle par la page d'attente. `data-final` signale a la
+page qu'elle peut cesser d'interroger.
+{% endcomment %}
+{% if payee %}
+  <div class="carte carte-p" data-final style="text-align:center">
+    <div class="etiq e-ok" style="margin-bottom:12px">Paiement confirmé</div>
+    <h2 style="margin-bottom:6px">Votre billet est émis</h2>
+    <p class="gris" style="margin:0 auto 18px">
+      Il part aussi par SMS au {{ reservation.phone }}.
+    </p>
+    <a class="btn btn-p" href="{% url 'web:billet' pk=reservation.pk signature=signature %}">
+      Voir mon billet
+    </a>
+  </div>
+{% elif echouee %}
+  <div class="carte carte-p" data-final style="text-align:center">
+    <div class="etiq e-err" style="margin-bottom:12px">Paiement non abouti</div>
+    <h2 style="margin-bottom:6px">La transaction n'a pas abouti</h2>
+    <p class="gris" style="margin:0 auto 18px">
+      Aucun montant n'a été débité. Vérifiez votre solde et reprenez le paiement ;
+      votre place est encore retenue.
+    </p>
+    <a class="btn btn-p" href="{% url 'web:paiement' pk=reservation.pk signature=signature %}">
+      Reprendre le paiement
+    </a>
+  </div>
+{% else %}
+  <div class="carte carte-p" style="text-align:center">
+    <div class="etiq e-info" style="margin-bottom:12px">Confirmation en attente</div>
+    <h2 style="margin-bottom:6px">Nous attendons votre opérateur</h2>
+    <p class="gris" style="margin:0 auto 14px">
+      Validez le paiement sur votre téléphone si ce n'est pas déjà fait.
+      Cette page se met à jour toute seule.
+    </p>
+    <div class="pile pile-2" style="max-width:420px;margin:0 auto;text-align:left">
+      <div class="squelette" style="height:12px"></div>
+      <div class="squelette" style="height:12px;width:70%"></div>
+    </div>
+    <p class="micro" style="margin-top:16px">
+      Si le réseau se coupe, votre argent n'est pas perdu : nous interrogeons l'opérateur
+      régulièrement et votre billet arrive par SMS, même si vous fermez cette page.
+      Référence à conserver : <span class="code">{{ reservation.ticket_number }}</span>
+    </p>
+  </div>
+{% endif %}

@@ -1,0 +1,126 @@
+{% extends "espace/base_espace.html" %}
+{% load transbooking %}
+{% block titre %}Tableau de bord — TransBooking BF{% endblock %}
+
+{% block contenu %}
+<div class="zone" style="padding:32px 0 48px">
+  <h1 style="margin-bottom:4px">Bonjour {{ user.prenom }}</h1>
+  <p class="plomb" style="margin-bottom:24px">
+    {% if prochaine %}Votre prochain départ est le {{ prochaine.trip.departure_time|date:"j F" }}.
+    {% else %}Vous n'avez pas de voyage à venir.{% endif %}
+  </p>
+
+  {% if prochaine %}
+  <div class="carte carte-p" style="margin-bottom:20px">
+    <div class="rang" style="margin-bottom:16px">
+      <span class="mini fort">Prochain voyage</span>
+      <span class="etiq e-ok">{{ prochaine.get_status_display }}</span>
+      <span class="mini fin code">{{ prochaine.ticket_number }}</span>
+    </div>
+    <div class="parcours">
+      <div>
+        <div class="h">{{ prochaine.trip.departure_time|time:"H:i" }}</div>
+        <div class="lieu">{{ prochaine.trip.route.origin_city.name }}</div>
+      </div>
+      <div class="milieu">
+        <div class="d">{{ prochaine.trip.departure_time|duree_entre:prochaine.trip.arrival_time }}</div>
+        <div class="trace"></div>
+      </div>
+      <div>
+        <div class="h">{% if prochaine.trip.arrival_time %}{{ prochaine.trip.arrival_time|time:"H:i" }}{% else %}—{% endif %}</div>
+        <div class="lieu">{{ prochaine.trip.route.destination_city.name }}</div>
+      </div>
+      <div style="width:1px;height:44px;background:var(--n200)"></div>
+      <div>
+        <div class="mini">{{ prochaine.trip.departure_time|date:"l j F" }}</div>
+        <div class="fort">Siège {{ prochaine.seat_number }}{% if prochaine.has_luggage %} · {{ prochaine.luggage_qty|default:1 }} bagage{{ prochaine.luggage_qty|pluralize }}{% endif %}</div>
+      </div>
+    </div>
+    <div class="rang" style="margin-top:18px;gap:10px">
+      <a class="btn btn-p" href="{% url 'web:espace-billet' ticket_number=prochaine.ticket_number %}">Voir mon billet</a>
+      <a class="btn btn-s" href="{% url 'web:espace-bagages' %}">Modifier mes bagages</a>
+      <a class="btn-texte fin" style="color:var(--erreur)" href="{% url 'web:espace-reservations' %}">Annuler la réservation</a>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="grille g2">
+    <div class="pile pile-4">
+      {% if a_payer or a_noter %}
+      <div class="carte carte-p">
+        <h2 style="margin-bottom:14px">À faire</h2>
+        <div class="pile pile-2">
+          {% for r in a_payer %}
+            <div class="a-faire" style="background:var(--attention-fond)">
+              <span class="puce" style="background:var(--attention)"></span>
+              <div style="flex:1">
+                <div class="fort">Réservation à régler avant le {{ r.trip.registration_closes_at|date:"j F, H:i" }}</div>
+                <div class="mini">{{ r.trip.route.origin_city.name }} → {{ r.trip.route.destination_city.name }} · {{ r.trip.departure_time|date:"j F" }} · {{ r.amount|fcfa }} FCFA</div>
+              </div>
+              <a class="btn btn-p btn-sm" href="{% url 'web:espace-paiement' pk=r.pk %}">Payer</a>
+            </div>
+          {% endfor %}
+          {% for r in a_noter %}
+            <div class="a-faire" style="background:var(--gris-fond)">
+              <span class="puce" style="background:var(--l500)"></span>
+              <div style="flex:1">
+                <div class="fort">Notez votre voyage du {{ r.trip.departure_time|date:"j F" }}</div>
+                <div class="mini">{{ r.trip.route.origin_city.name }} → {{ r.trip.route.destination_city.name }} avec {{ r.trip.route.company.name }}</div>
+              </div>
+              <a class="btn btn-s btn-sm" href="{% url 'web:espace-avis' trip_pk=r.trip_id %}">Noter</a>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      {% if colis %}
+      <div class="carte carte-p">
+        <h2 style="margin-bottom:14px">Mes colis</h2>
+        {% for c in colis %}
+          <div class="rang" style="padding:12px;border-radius:var(--r-m);background:var(--gris-fond)">
+            <div>
+              <div class="code">{{ c.tracking_number }}</div>
+              <div class="mini">{{ c.origin_city.name }} → {{ c.destination_city.name }} · {{ c.weight_kg }} kg</div>
+            </div>
+            <span class="etiq e-att fin">{{ c.get_status_display }}</span>
+          </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="pile pile-4">
+      <div class="carte carte-p">
+        <h2 style="margin-bottom:14px">Notifications</h2>
+        {% if notifications %}
+          {% for n in notifications %}
+            <div class="rang" style="padding:11px 0;border-bottom:1px solid var(--n200);align-items:flex-start">
+              <span class="puce" style="width:9px;height:9px;border-radius:50%;background:{% if not n.is_read %}var(--info){% else %}var(--n300){% endif %};margin-top:6px"></span>
+              <div style="flex:1">
+                <div class="fort" style="font-size:15px">{{ n.title }}</div>
+                {% if n.body %}<div class="mini">{{ n.body }}</div>{% endif %}
+              </div>
+              <span class="micro fin">{{ n.created_at|timesince }}</span>
+            </div>
+          {% endfor %}
+        {% else %}
+          <p class="mini">Aucune notification pour le moment.</p>
+        {% endif %}
+      </div>
+
+      <div class="carte carte-p">
+        <h2 style="margin-bottom:14px">Signaler un problème</h2>
+        <div class="grille g2">
+          <a class="carte carte-p" style="background:var(--gris-fond);box-shadow:none" href="{% url 'web:espace-nouvelle-reclamation' %}">
+            <b>Déposer une réclamation</b>
+          </a>
+          <a class="carte carte-p" style="background:var(--gris-fond);box-shadow:none" href="{% url 'web:espace-signalement' %}">
+            <b>Signaler un excès de vitesse</b>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block titre %}Confirmation en cours — TransBooking BF{% endblock %}
+
+{% block contenu %}
+<div class="zone-etroite" style="padding:24px 0 48px">
+  {% include "partiels/etapes.html" %}
+
+  <div id="statut" style="margin-top:20px">
+    {% include "partiels/statut_paiement.html" with paiement=None payee=False echouee=False %}
+  </div>
+
+  <noscript>
+    <meta http-equiv="refresh" content="6">
+    <p class="micro" style="margin-top:12px">
+      Cette page se rafraîchit toute seule toutes les six secondes.
+    </p>
+  </noscript>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // La page de retour de l'operateur n'accorde jamais le paiement : elle
+  // interroge notre propre statut, qui n'avance que sur notification signee.
+  // Sans JavaScript, la balise meta ci-dessus fait le meme travail.
+  (function () {
+    var cible = document.getElementById('statut');
+    var url = "{% url 'web:statut' pk=reservation.pk signature=signature %}";
+    var essais = 0;
+
+    function interroger() {
+      fetch(url, { headers: { 'X-Requested-With': 'fetch' } })
+        .then(function (r) { return r.text(); })
+        .then(function (html) {
+          cible.innerHTML = html;
+          if (cible.querySelector('[data-final]')) { return; }
+          // On espace les appels : deux secondes au debut, puis de plus en
+          // plus, jusqu'a dix. Un operateur peut mettre une minute.
+          essais += 1;
+          setTimeout(interroger, Math.min(2000 + essais * 800, 10000));
+        })
+        .catch(function () { setTimeout(interroger, 5000); });
+    }
+    setTimeout(interroger, 2000);
+  })();
+</script>
+{% endblock %}

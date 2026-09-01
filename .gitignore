@@ -1,0 +1,26 @@
+AGENTS.md
+*.sqlite3
+*.docx
+
+transbooking_bf_api_endpoints.md
+venv/
+__pycache__/
+
+# Secrets & environnement local
+.env*
+
+# Artefacts Django / build
+media/
+staticfiles/
+
+# Tests & couverture
+.pytest_cache/
+.coverage
+htmlcov/
+documents/
+docs/*.md
+PROMPTS.md
+CLAUDE.md
+.claude/
+PROMPT_SUP.md
+backend_*

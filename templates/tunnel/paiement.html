@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% load transbooking %}
+{% block titre %}Paiement — TransBooking BF{% endblock %}
+
+{% block contenu %}
+<div class="zone-etroite" style="padding:24px 0 48px">
+  {% include "partiels/etapes.html" %}
+
+  <h1 style="margin:20px 0 4px">Paiement</h1>
+  <p class="plomb" style="margin-bottom:18px">
+    {{ trajet.route.origin_city.name }} → {{ trajet.route.destination_city.name }} ·
+    {{ trajet.departure_time|date:"D j M" }} · siège {{ reservation.seat_number }} ·
+    <b style="color:var(--encre)">{{ reservation.amount|fcfa }} FCFA</b>
+  </p>
+
+  <div class="bandeau b-info" style="margin-bottom:20px">
+    <span class="ic">i</span>
+    <div>
+      Vous validez le paiement sur la page sécurisée de votre opérateur, avec votre code
+      secret. TransBooking ne voit jamais ce code.
+    </div>
+  </div>
+
+  <form class="carte carte-p" method="post">
+    {% csrf_token %}
+
+    {% if form.errors %}
+      <div class="bandeau b-err" style="margin-bottom:14px"><span class="ic">!</span>
+        <div>Vérifiez le moyen de paiement choisi.</div></div>
+    {% endif %}
+
+    <h3 style="margin-bottom:12px">Choisir le moyen de paiement</h3>
+
+    <div class="pile pile-2">
+      {% for valeur, libelle in moyens %}
+        <label class="moyen">
+          <input type="radio" name="method" value="{{ valeur }}" {% if forloop.first %}checked{% endif %}>
+          <span class="marque">{{ libelle|initiales }}</span>
+          <span class="texte">
+            <b>{{ libelle }}</b>
+            <span class="mini">
+              {% if valeur == 'cash' %}Réglez à l'agence. Votre place est retenue en attendant.
+              {% else %}Validation par code secret sur la page de l'opérateur.{% endif %}
+            </span>
+          </span>
+        </label>
+      {% endfor %}
+    </div>
+
+    <div class="champ" style="margin-top:14px">
+      <label for="id_payer_phone">Numéro à débiter — facultatif</label>
+      <input id="id_payer_phone" name="payer_phone" inputmode="tel" placeholder="70 12 34 56">
+    </div>
+    <p class="aide-champ">
+      Ce n'est pas forcément votre numéro : un proche peut régler depuis son propre compte.
+      Laissez vide pour le saisir chez l'opérateur.
+    </p>
+
+    <button class="btn btn-p btn-bloc" type="submit" style="margin-top:18px">
+      Payer {{ reservation.amount|fcfa }} FCFA
+    </button>
+    <p class="micro" style="margin-top:10px;text-align:center">
+      Billet n° <span class="code">{{ reservation.ticket_number }}</span> — conservez ce numéro.
+    </p>
+  </form>
+</div>
+{% endblock %}

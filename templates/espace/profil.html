@@ -1,0 +1,112 @@
+{% extends "espace/base_espace.html" %}
+{% load transbooking %}
+{% block titre %}Mon profil — TransBooking BF{% endblock %}
+
+{% block contenu %}
+<div class="zone" style="padding:32px 0 48px">
+  <h1 style="margin-bottom:4px">Mon profil</h1>
+  <p class="plomb" style="margin-bottom:24px">Ces informations pré-remplissent vos réservations.</p>
+
+  <div class="grille" style="grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start">
+    <div class="pile pile-4">
+
+      <form method="post" class="carte carte-p">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="profil">
+        <h3 style="margin-bottom:16px">Identité &amp; contact</h3>
+        {% if form.non_field_errors %}
+          <div class="bandeau b-err" style="margin-bottom:14px"><span class="ic">!</span><div>{{ form.non_field_errors }}</div></div>
+        {% endif %}
+        <div class="grille g2" style="gap:12px">
+          {% for champ in form %}
+            {% if champ.field.widget.input_type != 'checkbox' %}
+              <div>
+                <div class="champ {% if champ.errors %}champ-erreur{% endif %}">
+                  <label for="{{ champ.id_for_label }}">{{ champ.label }}</label>
+                  {{ champ }}
+                </div>
+                {% if champ.errors %}<div class="aide-erreur">{{ champ.errors.0 }}</div>{% endif %}
+              </div>
+            {% endif %}
+          {% endfor %}
+          <div class="champ"><label>Téléphone — identifiant de connexion</label><div style="font-size:16px;font-weight:600;padding:2px 0">{{ user.phone }}</div></div>
+        </div>
+        {# Les trois interrupteurs vivent dans le formulaire ci-dessous : on les reporte ici en champs caches pour ne pas les remettre a zero. #}
+        {% if form.notify_departure_reminder.value %}<input type="hidden" name="notify_departure_reminder" value="on">{% endif %}
+        {% if form.notify_parcel_arrival.value %}<input type="hidden" name="notify_parcel_arrival" value="on">{% endif %}
+        {% if form.notify_marketing.value %}<input type="hidden" name="notify_marketing" value="on">{% endif %}
+        <button class="btn btn-p" style="margin-top:16px" type="submit">Enregistrer</button>
+      </form>
+
+      <div class="carte carte-p">
+        <h3 style="margin-bottom:4px">Notifications</h3>
+        <p class="mini" style="margin-bottom:8px">Les alertes de départ et les confirmations de paiement restent toujours actives.</p>
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="profil">
+          {% for champ in form %}
+            {% if champ.field.widget.input_type == 'checkbox' %}
+              <div class="rang" style="padding:12px 0;border-bottom:1px solid var(--n200)">
+                <b style="flex:1">{{ champ.label }}</b>
+                <label class="interrupteur">{{ champ }}<span class="piste-sw"></span></label>
+              </div>
+            {% endif %}
+          {% endfor %}
+          {% for champ in form %}
+            {% if champ.field.widget.input_type != 'checkbox' %}<input type="hidden" name="{{ champ.name }}" value="{{ champ.value|default:'' }}">{% endif %}
+          {% endfor %}
+          <button class="btn btn-s btn-sm" style="margin-top:14px" type="submit">Enregistrer les préférences</button>
+        </form>
+      </div>
+
+      <form method="post" class="carte carte-p">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="mot_de_passe">
+        <h3 style="margin-bottom:16px">Mot de passe</h3>
+        {% if mot_de_passe_form.non_field_errors %}
+          <div class="bandeau b-err" style="margin-bottom:14px"><span class="ic">!</span><div>{{ mot_de_passe_form.non_field_errors }}</div></div>
+        {% endif %}
+        <div class="grille g2" style="gap:12px">
+          {% for champ in mot_de_passe_form %}
+            <div>
+              <div class="champ {% if champ.errors %}champ-erreur{% endif %}">
+                <label for="{{ champ.id_for_label }}">{{ champ.label }}</label>
+                {{ champ }}
+              </div>
+              {% if champ.errors %}<div class="aide-erreur">{{ champ.errors.0 }}</div>{% endif %}
+            </div>
+          {% endfor %}
+        </div>
+        <button class="btn btn-s" style="margin-top:16px" type="submit">Changer le mot de passe</button>
+      </form>
+    </div>
+
+    <div class="pile pile-4">
+      <div class="carte carte-p" style="text-align:center">
+        <span class="avatar avatar-grand" style="font-size:22px">{{ user.prenom|first }}{{ user.nom|first }}</span>
+        <div class="fort" style="font-size:18px;margin-top:12px">{{ user.prenom }} {{ user.nom }}</div>
+        <div class="mini" style="margin-bottom:14px">Membre depuis {{ user.created_at|date:"F Y" }}</div>
+        <div class="rang" style="justify-content:center;gap:24px;padding-top:14px;border-top:1px solid var(--n200)">
+          <div><div class="donnee">{{ voyages_count }}</div><div class="micro">voyages</div></div>
+          <div><div class="donnee">{{ avis_count }}</div><div class="micro">avis publiés</div></div>
+        </div>
+      </div>
+
+      <div class="carte carte-p">
+        <h3 style="margin-bottom:10px">Mon compte</h3>
+        <form method="post" onsubmit="return confirm('Désactiver votre compte ?');">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="supprimer">
+          <button class="btn-texte" style="color:var(--erreur)" type="submit">Supprimer mon compte</button>
+        </form>
+        <p class="micro" style="margin-top:8px">Désactive votre compte immédiatement. Vos billets passés restent chez les compagnies concernées.</p>
+      </div>
+
+      <form method="post" action="{% url 'web:deconnexion' %}">
+        {% csrf_token %}
+        <button class="btn btn-s btn-bloc" type="submit">Se déconnecter</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

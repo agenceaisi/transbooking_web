@@ -1,0 +1,97 @@
+{% load static %}<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{% block titre %}TransBooking BF{% endblock %}</title>
+<meta name="description" content="{% block description %}Réservez votre billet de bus au Burkina Faso : horaires, prix et places disponibles de toutes les compagnies.{% endblock %}">
+{% block meta_sociales %}{% endblock %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="{% static 'css/transbooking.css' %}">
+</head>
+<body>
+
+<a class="saut" href="#contenu">Aller au contenu</a>
+
+<header class="entete">
+  <div class="zone">
+    <a class="logo" href="{% url 'web:accueil' %}">
+      <span class="m" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="13" rx="2.5"/><path d="M3 10h18M7.5 17v2M16.5 17v2"/></svg>
+      </span>
+      <b>TransBooking <span style="color:var(--i500)">BF</span></b>
+    </a>
+
+    <nav class="nav-site" aria-label="Navigation principale">
+      <a href="{% url 'web:accueil' %}"{% block nav_voyages %}{% endblock %}>Voyages</a>
+      <a href="{% url 'web:accueil' %}#colis">Colis</a>
+      <a href="{% url 'web:accueil' %}#compagnies">Compagnies</a>
+      <a href="{% url 'web:accueil' %}#aide">Aide</a>
+    </nav>
+
+    <div class="actions-entete">
+      <a class="lien-app" href="#">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></svg>
+        Application
+      </a>
+      <a class="btn btn-s btn-sm" href="{% url 'web:connexion' %}">Se connecter</a>
+    </div>
+  </div>
+</header>
+
+{% block bandeau %}{% endblock %}
+
+<main id="contenu">
+  {% if messages %}
+    <div class="zone" style="padding-top:16px">
+      {% for message in messages %}
+        <div class="bandeau b-att"><span class="ic">!</span><div>{{ message }}</div></div>
+      {% endfor %}
+    </div>
+  {% endif %}
+  {% block contenu %}{% endblock %}
+</main>
+
+<footer class="pied">
+  <div class="zone">
+    <div class="grille g4" style="gap:28px">
+      <div>
+        <h4>TransBooking BF</h4>
+        <a href="#">À propos</a>
+        <a href="{% url 'web:accueil' %}#compagnies">Nos compagnies</a>
+        <a href="{% url 'web:accueil' %}#devenir-partenaire">Devenir partenaire</a>
+      </div>
+      <div>
+        <h4>Voyager</h4>
+        <a href="{% url 'web:accueil' %}">Rechercher un trajet</a>
+        <a href="{% url 'web:accueil' %}#suivi">Suivre un colis</a>
+        <a href="#">Mon billet</a>
+      </div>
+      <div>
+        <h4>Aide</h4>
+        <a href="{% url 'web:accueil' %}#aide">Centre d'aide</a>
+        <a href="{% url 'web:accueil' %}#garanties">Annulation et remboursement</a>
+        <a href="{% url 'web:accueil' %}#aide">Nous contacter</a>
+      </div>
+      <div>
+        <h4>L'application</h4>
+        <div class="pile pile-2" style="margin-top:4px">
+          <a class="badge-store" href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 3.5v17a1 1 0 0 0 1.5.87l12-8.5a1 1 0 0 0 0-1.74l-12-8.5A1 1 0 0 0 4 3.5Z"/></svg><b>Google Play<span>Télécharger</span></b></a>
+          <a class="badge-store" href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.4 12.7c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.2-2.8.8-3.5.8-.7 0-1.8-.8-3-.8-1.5 0-2.9.9-3.7 2.3-1.6 2.7-.4 6.8 1.1 9 .8 1.1 1.7 2.3 2.9 2.2 1.2 0 1.6-.7 3-.7s1.8.7 3 .7c1.3 0 2.1-1.1 2.8-2.2.9-1.2 1.3-2.5 1.3-2.5s-2.5-1-2.5-3.5ZM14.2 5.6c.6-.8 1-1.9.9-3-.9 0-2 .6-2.7 1.4-.6.7-1.1 1.8-.9 2.9 1 .1 2.1-.5 2.7-1.3Z"/></svg><b>App Store<span>Télécharger</span></b></a>
+        </div>
+      </div>
+    </div>
+    <div class="bas">
+      <span>© {% now "Y" %} TransBooking BF · Ouagadougou, Burkina Faso</span>
+      <a href="#">Mentions légales</a>
+      <a href="#">Données personnelles</a>
+      <a href="#">Conditions générales</a>
+    </div>
+  </div>
+</footer>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>

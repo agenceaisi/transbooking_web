@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block titre %}Connexion — TransBooking BF{% endblock %}
+
+{% block contenu %}
+<div class="zone-etroite" style="max-width:440px;padding:56px 0">
+  <h1 style="margin-bottom:6px">Connexion</h1>
+  <p class="plomb" style="margin-bottom:24px">Accédez à vos réservations, vos billets et vos réclamations.</p>
+
+  <form class="carte carte-p" method="post">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <div class="bandeau b-err" style="margin-bottom:14px"><span class="ic">!</span><div>{{ form.non_field_errors }}</div></div>
+    {% endif %}
+    <div class="pile pile-3">
+      {% for champ in form %}
+        <div>
+          <div class="champ {% if champ.errors %}champ-erreur{% endif %}">
+            <label for="{{ champ.id_for_label }}">{{ champ.label }}</label>
+            {{ champ }}
+          </div>
+          {% if champ.errors %}<div class="aide-erreur">{{ champ.errors.0 }}</div>{% endif %}
+        </div>
+      {% endfor %}
+    </div>
+    <button class="btn btn-p btn-bloc" type="submit" style="margin-top:18px">Se connecter</button>
+  </form>
+
+  <p class="mini" style="text-align:center;margin-top:18px">
+    Pas encore de compte ? <a class="btn-texte" href="{% url 'web:inscription' %}">Créer un compte voyageur</a>
+  </p>
+</div>
+{% endblock %}
