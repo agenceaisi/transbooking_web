@@ -1,0 +1,69 @@
+{% extends "espace/base_espace.html" %}
+{% load transbooking %}
+{% block titre %}Mes réservations — TransBooking BF{% endblock %}
+
+{% block contenu %}
+<div class="zone" style="padding:32px 0 48px">
+  <div class="rang" style="margin-bottom:20px;align-items:flex-end">
+    <div>
+      <h1 style="margin-bottom:4px">Mes réservations</h1>
+      <p class="plomb">{{ compteurs.a_venir|add:compteurs.a_payer|add:compteurs.passees|add:compteurs.annulees }} réservation{{ compteurs.a_venir|pluralize }}</p>
+    </div>
+    <a class="btn btn-p fin" href="{% url 'web:accueil' %}">Réserver un trajet</a>
+  </div>
+
+  <div class="filtres-onglets" style="margin-bottom:20px">
+    <a href="?onglet=a_venir" {% if onglet == 'a_venir' %}aria-current="true"{% endif %}>À venir · {{ compteurs.a_venir }}</a>
+    <a href="?onglet=a_payer" {% if onglet == 'a_payer' %}aria-current="true"{% endif %}>À payer · {{ compteurs.a_payer }}</a>
+    <a href="?onglet=passees" {% if onglet == 'passees' %}aria-current="true"{% endif %}>Passées · {{ compteurs.passees }}</a>
+    <a href="?onglet=annulees" {% if onglet == 'annulees' %}aria-current="true"{% endif %}>Annulées · {{ compteurs.annulees }}</a>
+  </div>
+
+  <div class="pile pile-3">
+    {% for r in reservations %}
+      <div class="carte carte-p">
+        <div class="grille" style="grid-template-columns:180px minmax(0,1fr) auto;gap:20px;align-items:center">
+          <div class="rang">
+            <span class="sigle" style="background:{{ r.trip.route.company.primary_color|couleur_sure }}">
+              {% if r.trip.route.company.sigle %}{{ r.trip.route.company.sigle|initiales }}{% else %}{{ r.trip.route.company.name|initiales }}{% endif %}
+            </span>
+            <div>
+              <b>{{ r.trip.route.company.name }}</b>
+              <div class="mini code">{{ r.ticket_number }}</div>
+            </div>
+          </div>
+          <div class="parcours">
+            <div><div class="h">{{ r.trip.departure_time|time:"H:i" }}</div><div class="lieu">{{ r.trip.route.origin_city.name }}</div></div>
+            <div class="milieu">
+              <div class="d">{{ r.trip.departure_time|date:"D j M" }} · siège {{ r.seat_number|default:"—" }}</div>
+              <div class="trace"></div>
+            </div>
+            <div><div class="h">{% if r.trip.arrival_time %}{{ r.trip.arrival_time|time:"H:i" }}{% else %}—{% endif %}</div><div class="lieu">{{ r.trip.route.destination_city.name }}</div></div>
+          </div>
+          <div class="pile pile-2" style="align-items:flex-end">
+            <div class="donnee">{{ r.amount|fcfa }} <span class="mini">FCFA</span></div>
+            <span class="etiq {% if r.status == 'paid' %}e-ok{% elif r.status == 'pending' %}e-att{% elif r.status == 'refunded' %}e-ok{% else %}e-neutre{% endif %}">
+              {{ statuts|cle:r.status }}
+            </span>
+            {% if r.status == 'paid' %}
+              <a class="btn btn-p btn-sm" href="{% url 'web:espace-billet' ticket_number=r.ticket_number %}">Voir le billet</a>
+            {% elif r.status == 'pending' %}
+              <a class="btn btn-p btn-sm" href="{% url 'web:espace-paiement' pk=r.pk %}">Payer maintenant</a>
+            {% endif %}
+            {% if onglet == 'a_venir' %}
+              <form method="post" onsubmit="return confirm('Annuler cette réservation ?');">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="annuler">
+                <input type="hidden" name="pk" value="{{ r.pk }}">
+                <button class="btn-texte" style="color:var(--erreur)" type="submit">Annuler</button>
+              </form>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <p class="mini">Aucune réservation dans cet onglet.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

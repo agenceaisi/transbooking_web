@@ -1,0 +1,43 @@
+{% extends "espace/base_espace.html" %}
+{% load transbooking %}
+{% block titre %}Paiement confirmé — TransBooking BF{% endblock %}
+
+{% block contenu %}
+<div class="zone-etroite" style="padding:44px 0 48px;max-width:820px">
+  <div style="text-align:center;margin-bottom:28px">
+    <h1 style="margin-bottom:8px">Paiement confirmé</h1>
+    <p class="plomb">Votre billet a été envoyé par SMS au {{ reservation.phone }}.</p>
+  </div>
+
+  <div class="grille g2" style="align-items:start">
+    <div class="carte carte-p">
+      <div class="rang" style="margin-bottom:12px">
+        <h3>Reçu de paiement</h3>
+        <span class="etiq e-ok fin">Payé</span>
+      </div>
+      <div class="billet-rang"><span class="gris">Référence</span><b class="code">{{ reservation.ticket_number }}</b></div>
+      <div class="billet-rang"><span class="gris">Date</span><b>{{ reglement.paid_at|date:"j F Y · H:i" }}</b></div>
+      <div class="billet-rang"><span class="gris">Moyen</span><b>{{ methode_libelle }}</b></div>
+      {% if reglement.transaction_ref %}
+        <div class="billet-rang"><span class="gris">N° de transaction</span><b class="code">{{ reglement.transaction_ref }}</b></div>
+      {% endif %}
+      <div class="billet-rang" style="border:0;padding-top:14px;margin-top:6px;border-top:1px solid var(--n300)">
+        <span class="fort">Total débité</span>
+        <span class="donnee">{{ reglement.amount|fcfa }} FCFA</span>
+      </div>
+    </div>
+
+    <div class="pile pile-3">
+      <div class="carte carte-p">
+        <h3 style="margin-bottom:14px">Ce qu'il vous reste à faire</h3>
+        <div class="pile pile-2">
+          <div>1. Présentez-vous 30 minutes avant le départ.</div>
+          <div>2. Montrez le QR code au contrôleur — il fonctionne sans réseau.</div>
+          <div>3. Munissez-vous d'une pièce d'identité.</div>
+        </div>
+        <a class="btn btn-p btn-bloc" style="margin-top:16px" href="{% url 'web:espace-billet' ticket_number=reservation.ticket_number %}">Voir mon billet</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

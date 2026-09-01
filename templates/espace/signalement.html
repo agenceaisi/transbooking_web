@@ -1,0 +1,71 @@
+{% extends "espace/base_espace.html" %}
+{% load transbooking %}
+{% block titre %}Signaler un excès de vitesse — TransBooking BF{% endblock %}
+
+{% block contenu %}
+<div class="zone-etroite" style="padding:32px 0 48px;max-width:760px">
+  <h1 style="margin-bottom:6px">Vous roulez trop vite ?</h1>
+  <p class="plomb" style="margin-bottom:20px">
+    Le signalement part à la compagnie et à TransBooking BF, pas au chauffeur pendant le trajet.
+  </p>
+
+  <div class="bandeau b-err" style="margin-bottom:20px">
+    <span class="ic">!</span>
+    <div><b>En cas de danger immédiat, appelez le 17 (police) ou le 18 (pompiers).</b> Ce formulaire sert au suivi, pas à l'urgence.</div>
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+    <div class="pile pile-4">
+
+      {% if voyage_en_cours %}
+        <div class="carte carte-p">
+          <h3 style="margin-bottom:12px">Le voyage en cours</h3>
+          <div class="rang" style="padding:14px;border-radius:var(--r-m);background:var(--i50);border:1.5px solid var(--i700)">
+            <span class="sigle" style="background:{{ voyage_en_cours.trip.route.company.primary_color|couleur_sure }}">{{ voyage_en_cours.trip.route.company.name|initiales }}</span>
+            <div>
+              <b>{{ voyage_en_cours.trip.route.origin_city.name }} → {{ voyage_en_cours.trip.route.destination_city.name }}</b>
+              <div class="mini">{{ voyage_en_cours.trip.vehicle.registration }} · départ {{ voyage_en_cours.trip.departure_time|time:"H:i" }}</div>
+            </div>
+          </div>
+        </div>
+      {% else %}
+        <div class="bandeau b-info"><span class="ic">i</span><div>Aucun voyage en cours détecté sur votre compte. Vous pouvez tout de même décrire la situation ci-dessous.</div></div>
+      {% endif %}
+
+      <div class="carte carte-p">
+        <h3 style="margin-bottom:6px">À quel point est-ce dangereux ?</h3>
+        <p class="mini" style="margin-bottom:14px">Votre appréciation, en toute honnêteté.</p>
+        <div class="grille g3">
+          {% for valeur, libelle in form.severity.field.choices %}
+            {% if valeur %}
+              <label class="motif" style="justify-content:center;text-align:center;flex-direction:column;gap:4px">
+                <input type="radio" name="severity" value="{{ valeur }}" {% if form.severity.value == valeur %}checked{% endif %}>
+                {{ libelle }}
+              </label>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="carte carte-p">
+        <h3 style="margin-bottom:12px">Ce que vous avez observé</h3>
+        <div class="champ" style="min-height:96px">
+          <label for="{{ form.description.id_for_label }}">Observation — facultatif</label>
+          {{ form.description }}
+        </div>
+      </div>
+
+      <div style="padding:16px 20px;border-left:4px solid var(--i700);background:var(--i50);border-radius:0 var(--r-m) var(--r-m) 0;font-size:14.5px">
+        Votre signalement est anonyme vis-à-vis du chauffeur et de la compagnie. Seuls TransBooking BF et le
+        responsable de la compagnie voient le dossier complet.
+      </div>
+
+      <div class="rang" style="gap:12px">
+        <button class="btn btn-destructif" type="submit">Envoyer le signalement</button>
+        <a class="btn-texte" href="{% url 'web:espace-tableau-de-bord' %}">Annuler</a>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}

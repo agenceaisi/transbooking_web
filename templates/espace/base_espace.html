@@ -1,0 +1,61 @@
+{% load static %}<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{% block titre %}Mon espace · TransBooking BF{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="{% static 'css/transbooking.css' %}">
+</head>
+<body>
+
+<a class="saut" href="#contenu">Aller au contenu</a>
+
+<header class="entete-espace">
+  <div class="zone">
+    <a class="logo" href="{% url 'web:espace-tableau-de-bord' %}">
+      <span class="m" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="13" rx="2.5"/><path d="M3 10h18M7.5 17v2M16.5 17v2"/></svg>
+      </span>
+      <b>TransBooking <span style="color:var(--i500)">BF</span></b>
+    </a>
+
+    <nav class="nav-site" aria-label="Espace voyageur">
+      <a href="{% url 'web:espace-tableau-de-bord' %}"{% if request.resolver_match.url_name == 'espace-tableau-de-bord' %} aria-current="page"{% endif %}>Tableau de bord</a>
+      <a href="{% url 'web:espace-reservations' %}"{% if request.resolver_match.url_name == 'espace-reservations' %} aria-current="page"{% endif %}>Mes réservations</a>
+      <a href="{% url 'web:espace-bagages' %}"{% if request.resolver_match.url_name == 'espace-bagages' %} aria-current="page"{% endif %}>Bagages</a>
+      <a href="{% url 'web:espace-reclamations' %}"{% if request.resolver_match.url_name == 'espace-reclamations' %} aria-current="page"{% endif %}>Réclamations</a>
+    </nav>
+
+    <div class="actions-entete">
+      <a class="btn-texte" href="{% url 'web:accueil' %}">Rechercher un trajet</a>
+      <div class="cloche" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ardoise)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 6-2 7-2 7h16s-2-1-2-7"/><path d="M10.5 20a2 2 0 0 0 3 0"/></svg>
+        {% if notifications_non_lues %}<span class="point"></span>{% endif %}
+      </div>
+      <a href="{% url 'web:espace-profil' %}" style="display:flex;align-items:center;gap:9px">
+        <span class="avatar">{{ user.prenom|first }}{{ user.nom|first }}</span>
+        <span class="mini fort" style="color:var(--encre)">{{ user.prenom }}</span>
+      </a>
+    </div>
+  </div>
+</header>
+
+<main id="contenu">
+  {% if messages %}
+    <div class="zone" style="padding-top:16px">
+      {% for message in messages %}
+        <div class="bandeau {% if message.tags == 'error' %}b-err{% elif message.tags == 'success' %}b-ok{% else %}b-info{% endif %}">
+          <span class="ic">{% if message.tags == 'error' %}!{% else %}i{% endif %}</span><div>{{ message }}</div>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+  {% block contenu %}{% endblock %}
+</main>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>

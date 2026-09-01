@@ -1,0 +1,72 @@
+{% extends "espace/base_espace.html" %}
+{% load transbooking %}
+{% block titre %}Nouvelle réclamation — TransBooking BF{% endblock %}
+
+{% block contenu %}
+<div class="zone-etroite" style="padding:32px 0 48px;max-width:860px">
+  <h1 style="margin-bottom:6px">Que s'est-il passé ?</h1>
+  <p class="plomb" style="margin-bottom:24px">La compagnie reçoit votre réclamation immédiatement et doit répondre sous 48 heures.</p>
+
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="pile pile-4">
+
+      {% if reservations %}
+      <div class="carte carte-p">
+        <h3 style="margin-bottom:12px">Le voyage concerné — facultatif</h3>
+        <div class="champ">
+          <label for="id_booking">Réservation</label>
+          <select id="id_booking" name="booking">
+            <option value="">Aucune réservation en particulier</option>
+            {% for r in reservations %}
+              <option value="{{ r.ticket_number }}" {% if form.booking.value == r.ticket_number %}selected{% endif %}>
+                {{ r.trip.route.origin_city.name }} → {{ r.trip.route.destination_city.name }} · {{ r.trip.departure_time|date:"j F" }} · {{ r.ticket_number }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="carte carte-p">
+        <h3 style="margin-bottom:12px">Le motif</h3>
+        <div class="motifs">
+          {% for valeur, libelle in form.claim_type.field.choices %}
+            <label class="motif">
+              <input type="radio" name="claim_type" value="{{ valeur }}" {% if form.claim_type.value == valeur %}checked{% endif %}>
+              {{ libelle }}
+            </label>
+          {% endfor %}
+        </div>
+        {% if form.claim_type.errors %}<div class="aide-erreur">{{ form.claim_type.errors.0 }}</div>{% endif %}
+      </div>
+
+      <div class="carte carte-p">
+        <h3 style="margin-bottom:12px">Votre description</h3>
+        <div class="champ">
+          <label for="{{ form.subject.id_for_label }}">Objet</label>
+          {{ form.subject }}
+        </div>
+        {% if form.subject.errors %}<div class="aide-erreur">{{ form.subject.errors.0 }}</div>{% endif %}
+
+        <div class="champ" style="margin-top:12px;min-height:130px">
+          <label for="{{ form.description.id_for_label }}">Décrivez ce qui s'est passé</label>
+          {{ form.description }}
+        </div>
+        {% if form.description.errors %}<div class="aide-erreur">{{ form.description.errors.0 }}</div>{% endif %}
+        <p class="aide-champ">Soyez précis : dates, heures, noms si vous les avez.</p>
+
+        <div style="margin-top:16px">
+          <label for="{{ form.attachment.id_for_label }}" class="mini fort" style="display:block;margin-bottom:6px">Pièce jointe — photo ou PDF, 10 Mo maximum</label>
+          {{ form.attachment }}
+        </div>
+      </div>
+
+      <div class="rang" style="gap:12px">
+        <button class="btn btn-p" type="submit">Envoyer la réclamation</button>
+        <a class="btn btn-s" href="{% url 'web:espace-reclamations' %}">Annuler</a>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,417 @@
+{% extends "base.html" %}
+{% load transbooking %}
+
+{% block titre %}Bus {{ ville_depart.name }} → {{ ville_arrivee.name }} · {{ date|date:"D j F Y" }} — TransBooking BF{% endblock %}
+{% block description %}{{ voyages|length }} départs {{ ville_depart.name }} – {{ ville_arrivee.name }} le {{ date|date:"l j F Y" }}{% if prix_mini %}, à partir de {{ prix_mini|fcfa }} FCFA{% endif %}. Horaires, compagnies et réservation en ligne.{% endblock %}
+{% block nav_voyages %} aria-current="page"{% endblock %}
+
+{% block bandeau %}
+<section class="bande">
+  <div class="zone">
+    <nav class="fil" aria-label="Fil d'Ariane">
+      <a href="{% url 'web:accueil' %}">Accueil</a><span>›</span>
+      <a href="{% url 'web:accueil' %}">Voyages</a><span>›</span>
+      {{ ville_depart.name }}<span>›</span>{{ ville_arrivee.name }}
+    </nav>
+    <h1 style="margin:10px 0 4px">{{ ville_depart.name }} → {{ ville_arrivee.name }}</h1>
+    <p style="color:rgba(255,255,255,.82);font-size:16px;margin:0">
+      {{ date|date:"l j F Y"|capfirst }} ·
+      {{ voyages|length }} départ{{ voyages|pluralize }}{% if prix_mini %} · à partir de {{ prix_mini|fcfa }} FCFA{% endif %}
+    </p>
+  </div>
+</section>
+
+<div class="zone panneau-recherche">
+  <form class="panneau panneau-compact" action="{% url 'web:accueil' %}" method="get">
+    <div class="champs champs-compact">
+      <div class="champ"><label for="depart">Départ</label>
+        <input id="depart" name="origine" value="{{ ville_depart.name }}" autocomplete="off"></div>
+      <div class="champ"><label for="arrivee">Arrivée</label>
+        <input id="arrivee" name="destination" value="{{ ville_arrivee.name }}" autocomplete="off"></div>
+      <div class="champ"><label for="date">Date de départ</label>
+        <input id="date" name="date" type="date" value="{{ date|date:'Y-m-d' }}"></div>
+      <div class="champ"><label for="passagers">Voyageurs</label>
+        <select id="passagers" name="passagers">
+          {% for n in "1234" %}
+            <option value="{{ n }}"{% if passagers|stringformat:"s" == n %} selected{% endif %}>{{ n }} voyageur{{ n|add:"0"|pluralize }}</option>
+          {% endfor %}
+        </select></div>
+      <button class="btn btn-p btn-chercher btn-chercher-compact" type="submit">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        Rechercher
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block contenu %}
+<div class="zone">
+  <div class="cadre-resultats">
+
+    <aside class="rail-filtres" aria-label="Filtres">
+      <p class="titre-rail">Affiner la recherche</p>
+
+      {% if facettes.compagnies %}
+      <div class="groupe-filtre">
+        <h3>Compagnie <a class="raz" href="{% lien_sans 'compagnie' %}">Tout</a></h3>
+        <div class="pile pile-2">
+          {% for c in facettes.compagnies %}
+            <a class="coche" role="checkbox" aria-checked="{{ c.actif|yesno:'true,false' }}"
+               href="{% lien_compagnie c.id facettes.compagnies %}">
+              <span class="case"></span>{{ c.nom }} <span class="nb">{{ c.nombre }}</span>
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="groupe-filtre">
+        <h3>Heure de départ</h3>
+        <div class="tranches">
+          {% for h in facettes.heures %}
+            <a class="tranche" aria-pressed="{{ h.actif|yesno:'true,false' }}" href="{% lien_scalaire 'heure' h.code %}">
+              <b>{{ h.libelle }}</b>
+              <span>{{ h.nombre }} départ{{ h.nombre|pluralize }}</span>
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+
+      {% if facettes.prix_plancher %}
+      <div class="groupe-filtre">
+        <h3>Prix</h3>
+        <div class="plage">
+          <span>{{ facettes.prix_plancher|fcfa }}</span>
+          <div class="piste">
+            <i style="left:{{ prix_pct_min }}%;right:{{ prix_pct_max_droite }}%"></i>
+            <b class="g" style="left:{{ prix_pct_min }}%"></b>
+            <b class="d" style="right:{{ prix_pct_max_droite }}%"></b>
+          </div>
+          <span>{{ facettes.prix_plafond|fcfa }}</span>
+        </div>
+        <form class="form-prix" method="get">
+          {% for cle, valeur in champs_caches_prix %}
+            <input type="hidden" name="{{ cle }}" value="{{ valeur }}">
+          {% endfor %}
+          <div class="champs-prix">
+            <div class="champ"><label for="prix_min">Min</label>
+              <input id="prix_min" type="number" inputmode="numeric" min="0" name="prix_min"
+                     value="{{ prix_min_saisi }}" placeholder="{{ facettes.prix_plancher|floatformat:0 }}"></div>
+            <div class="champ"><label for="prix_max">Max</label>
+              <input id="prix_max" type="number" inputmode="numeric" min="0" name="prix_max"
+                     value="{{ prix_max_saisi }}" placeholder="{{ facettes.prix_plafond|floatformat:0 }}"></div>
+          </div>
+          <button class="btn btn-s btn-sm btn-bloc" type="submit">Appliquer</button>
+        </form>
+        <p class="micro" style="margin-top:8px">Prix total, frais de service inclus.</p>
+      </div>
+      {% endif %}
+
+      <div class="groupe-filtre">
+        <h3>Trajet</h3>
+        <div class="pile pile-2">
+          {% for e in facettes.escales %}
+            <a class="coche" role="checkbox" aria-checked="{{ e.actif|yesno:'true,false' }}"
+               href="{% lien_facette 'escales' e.code %}">
+              <span class="case"></span>{{ e.libelle }} <span class="nb">{{ e.nombre }}</span>
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="groupe-filtre">
+        <h3>Type de voyage</h3>
+        <div class="pile pile-2">
+          {% for p in facettes.paliers %}
+            <a class="coche" role="checkbox" aria-checked="{{ p.actif|yesno:'true,false' }}"
+               href="{% lien_facette 'palier' p.code %}">
+              <span class="case"></span>{{ p.libelle }} <span class="nb">{{ p.nombre }}</span>
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="groupe-filtre">
+        <h3>Services à bord</h3>
+        <div class="pile pile-2">
+          {% for s in facettes.services %}
+            <a class="coche" role="checkbox" aria-checked="{{ s.actif|yesno:'true,false' }}"
+               href="{% lien_facette 'service' s.code %}">
+              <span class="case"></span>{{ s.libelle }} <span class="nb">{{ s.nombre }}</span>
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="groupe-filtre">
+        <h3>Note des voyageurs</h3>
+        <div class="pile pile-2">
+          {% for n in facettes.notes %}
+            <a class="coche" role="checkbox" aria-checked="{{ n.actif|yesno:'true,false' }}"
+               href="{% lien_scalaire 'note' n.code %}">
+              <span class="case"></span>{{ n.libelle }} <span class="nb">{{ n.nombre }}</span>
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="groupe-filtre">
+        <h3>Bon à savoir</h3>
+        <p class="micro" style="margin:0">
+          Les prix affichés sont les prix totaux, frais de service inclus.
+          Les places restantes sont mises à jour toutes les minutes.
+        </p>
+      </div>
+    </aside>
+
+    <main>
+      {% if jours %}
+      <div class="jours" role="group" aria-label="Prix les plus bas des jours voisins">
+        {% for j in jours %}
+          <a class="jour {% if j.meilleur %}bas{% endif %}"
+             href="{% lien_valeur 'date' j.date|date:'Y-m-d' %}"
+             {% if j.courant %}aria-current="date"{% endif %}>
+            <span class="j">{{ j.date|date:"D j" }}</span>
+            <span class="p">{% if j.prix %}{{ j.prix|fcfa }}{% else %}—{% endif %}</span>
+          </a>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <div class="barre-tri">
+        <p class="compte" style="margin:0">
+          <b>{{ voyages|length }} départ{{ voyages|pluralize }}</b>
+          {% if prix_mini %} · à partir de {{ prix_mini|fcfa }} FCFA{% endif %}
+        </p>
+        <div class="tri" role="group" aria-label="Trier les résultats">
+          <a href="{% lien_valeur 'tri' 'prix' %}"><button type="button" aria-pressed="{% if tri == 'prix' %}true{% else %}false{% endif %}">Moins cher</button></a>
+          <a href="{% lien_valeur 'tri' 'depart' %}"><button type="button" aria-pressed="{% if tri == 'depart' %}true{% else %}false{% endif %}">Plus tôt</button></a>
+          <a href="{% lien_valeur 'tri' 'note' %}"><button type="button" aria-pressed="{% if tri == 'note' %}true{% else %}false{% endif %}">Mieux notés</button></a>
+        </div>
+      </div>
+
+      {% if voyages %}
+      <div class="liste-departs">
+        {% for v in voyages %}
+          <article class="ligne{% if v.price == prix_mini and forloop.first %} mise-en-avant{% endif %}">
+            {% if v.price == prix_mini and forloop.first %}<span class="ruban">Moins cher</span>{% endif %}
+
+            {# --- Véhicule : badges de confort visibles, fiche complète au survol. --- #}
+            <div class="cie declencheur" tabindex="0" aria-describedby="ib-veh-{{ forloop.counter0 }}">
+              <span class="sigle" style="background:{{ v.route.company.primary_color|couleur_sure }}">
+                {% if v.route.company.sigle %}{{ v.route.company.sigle|initiales }}{% else %}{{ v.route.company.name|initiales }}{% endif %}
+              </span>
+              <span>
+                <b class="nom">{{ v.route.company.name }}</b>
+                {% if v.company_rating %}
+                  <span class="note"><span class="etoiles">★</span> <b>{{ v.company_rating|floatformat:1 }}</b></span>
+                {% endif %}
+                <span class="services">
+                  <span class="service">{{ v.vehicle.vehicle_type|palier }}</span>
+                  {% if v.stops_count %}
+                    <span class="service">{{ v.stops_count }} escale{{ v.stops_count|pluralize }}</span>
+                  {% else %}
+                    <span class="service">Direct</span>
+                  {% endif %}
+                </span>
+                <span class="confort-badges">
+                  {% for c in v.vehicle.vehicle_type|confort|slice:":4" %}
+                    <span class="badge-confort" title="{{ c.libelle }}">{{ c.icone }}</span>
+                  {% endfor %}
+                  {% if v.vehicle.vehicle_type|confort|length > 4 %}
+                    <span class="badge-confort-plus">+{{ v.vehicle.vehicle_type|confort|length|add:"-4" }}</span>
+                  {% endif %}
+                </span>
+              </span>
+
+              <div class="info-bulle info-bulle-vehicule" role="tooltip" id="ib-veh-{{ forloop.counter0 }}">
+                <div class="ib-tete">
+                  <b>{{ v.vehicle.brand }} {{ v.vehicle.model }}</b>
+                  <span class="palier-badge palier-{{ v.vehicle.vehicle_type|default:'standard' }}">{{ v.vehicle.vehicle_type|palier }}</span>
+                </div>
+                <p class="ib-desc">{{ v.vehicle.vehicle_type|palier_description }}</p>
+                <ul class="ib-liste">
+                  {% for c in v.vehicle.vehicle_type|confort %}
+                    <li>{{ c.icone }} {{ c.libelle }}</li>
+                  {% endfor %}
+                </ul>
+                <div class="ib-pied">
+                  <span>{{ v.vehicle.total_seats }} places</span>
+                  <span class="code">{{ v.vehicle.registration }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="parcours">
+              <div class="declencheur declencheur-depart" tabindex="0" aria-describedby="ib-dep-{{ forloop.counter0 }}">
+                <div class="h">{{ v.departure_time|time:"H:i" }}</div>
+                <div class="lieu">{{ v.route.origin_station.name|default:v.route.origin_city.name }}</div>
+
+                <div class="info-bulle info-bulle-gare info-bulle-depart" role="tooltip" id="ib-dep-{{ forloop.counter0 }}">
+                  <div class="ib-tete"><b>{{ v.route.origin_station.name|default:v.route.origin_city.name }}</b></div>
+                  {% if v.route.origin_station.address %}
+                    <p class="ib-desc">{{ v.route.origin_station.address }}</p>
+                  {% endif %}
+                  <div class="ib-pied">
+                    <span>{{ v.route.origin_city.name }}{% if v.route.origin_city.region %} · {{ v.route.origin_city.region }}{% endif %}</span>
+                    <span>Embarquement {{ v.departure_time|time:"H:i" }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="milieu declencheur declencheur-trajet" tabindex="0" aria-describedby="ib-trj-{{ forloop.counter0 }}">
+                <div class="d">{{ v.departure_time|duree_entre:v.arrival_time|default:"" }}</div>
+                <div class="trace"></div>
+                <div class="d">
+                  {% if v.stops_count %}{{ v.stops_count }} escale{{ v.stops_count|pluralize }}{% else %}Direct{% endif %}
+                </div>
+
+                <div class="info-bulle info-bulle-trajet" role="tooltip" id="ib-trj-{{ forloop.counter0 }}">
+                  <div class="ib-tete">
+                    <b>{{ v.route.origin_city.name }} → {{ v.route.destination_city.name }}</b>
+                    {% if v.route.distance_km %}<span class="micro">{{ v.route.distance_km|floatformat:0 }} km</span>{% endif %}
+                  </div>
+                  <p class="ib-desc">
+                    Départ {{ v.departure_time|time:"H:i" }}
+                    {% if v.arrival_time %} · arrivée {{ v.arrival_time|time:"H:i" }} le {{ v.arrival_time|date:"j F" }}{% endif %}
+                  </p>
+                  {% if v.route.stops.all %}
+                    <ol class="ib-etapes">
+                      {% for e in v.route.stops.all %}
+                        <li><b>{{ e.display_name|default:e.city.name }}</b></li>
+                      {% endfor %}
+                    </ol>
+                  {% else %}
+                    <p class="ib-desc" style="margin:0">Trajet direct, sans arrêt intermédiaire.</p>
+                  {% endif %}
+                </div>
+              </div>
+
+              <div class="declencheur declencheur-arrivee" tabindex="0" aria-describedby="ib-arr-{{ forloop.counter0 }}">
+                <div class="h">{% if v.arrival_time %}{{ v.arrival_time|time:"H:i" }}{% else %}—{% endif %}</div>
+                <div class="lieu">{{ v.route.destination_station.name|default:v.route.destination_city.name }}</div>
+
+                <div class="info-bulle info-bulle-gare info-bulle-arrivee" role="tooltip" id="ib-arr-{{ forloop.counter0 }}">
+                  <div class="ib-tete"><b>{{ v.route.destination_station.name|default:v.route.destination_city.name }}</b></div>
+                  {% if v.route.destination_station.address %}
+                    <p class="ib-desc">{{ v.route.destination_station.address }}</p>
+                  {% endif %}
+                  <div class="ib-pied">
+                    <span>{{ v.route.destination_city.name }}{% if v.route.destination_city.region %} · {{ v.route.destination_city.region }}{% endif %}</span>
+                    {% if v.arrival_time %}<span>Arrivée {{ v.arrival_time|time:"H:i" }}</span>{% endif %}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="fin">
+              <div class="prix">{{ v.price|fcfa }} <span>FCFA</span></div>
+              <a class="btn btn-p btn-sm" href="{% url 'web:voyage' pk=v.pk %}">Choisir</a>
+              {% if v.available_seats <= 5 %}
+                <span class="reste">Plus que {{ v.available_seats }} place{{ v.available_seats|pluralize }}</span>
+              {% else %}
+                <span class="reste calme">{{ v.available_seats }} places</span>
+              {% endif %}
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="carte carte-p" style="text-align:center;padding:40px 24px">
+        <h3 style="margin-bottom:6px">Aucun départ ce jour-là</h3>
+        <p class="gris" style="margin:0 auto 18px">
+          Essayez une date voisine : la bande ci-dessus indique les jours où des places restent.
+        </p>
+        <a class="btn btn-s" href="{% url 'web:accueil' %}">Changer de recherche</a>
+      </div>
+      {% endif %}
+    </main>
+  </div>
+</div>
+
+{% if resume_axe %}
+<section class="section fond-gris">
+  <div class="zone grille g2" style="gap:44px;align-items:start">
+    <div>
+      <h2 style="margin-bottom:12px">Le trajet {{ ville_depart.name }} – {{ ville_arrivee.name }}</h2>
+      <p class="plomb" style="margin-bottom:12px">
+        {% if resume_axe.distance_km %}C'est {{ resume_axe.distance_km|floatformat:0 }} kilomètres de route, desservis par {% else %}Cet axe est desservi par {% endif %}
+        {{ resume_axe.companies_count }} compagnie{{ resume_axe.companies_count|pluralize }} :
+        {{ resume_axe.trip_count }} départ{{ resume_axe.trip_count|pluralize }} programmé{{ resume_axe.trip_count|pluralize }} sur les 7 prochains jours.
+        {% if resume_axe.premier_depart and resume_axe.dernier_depart %}
+          Aujourd'hui, le premier bus part à {{ resume_axe.premier_depart|time:"H:i" }}, le dernier à {{ resume_axe.dernier_depart|time:"H:i" }}.
+        {% endif %}
+      </p>
+      <p class="plomb">
+        Comptez {{ resume_axe.min_duration|duree }}{% if resume_axe.max_duration and resume_axe.max_duration != resume_axe.min_duration %} à {{ resume_axe.max_duration|duree }} avec escale{% endif %} selon le départ choisi.
+        {% if resume_axe.escales_frequentes %}Arrêts les plus fréquents en chemin : {{ resume_axe.escales_frequentes|join:", " }}.{% endif %}
+        Présentez-vous à la gare trente minutes avant l'heure affichée.
+      </p>
+
+      <div class="grille g3" style="margin-top:22px">
+        <div class="carte carte-p">
+          <p class="mini" style="margin:0 0 2px">Prix le plus bas</p>
+          <p class="donnee">{{ resume_axe.min_price|fcfa }} FCFA</p>
+        </div>
+        <div class="carte carte-p">
+          <p class="mini" style="margin:0 0 2px">Durée moyenne</p>
+          <p class="donnee">{{ resume_axe.min_duration|duree|default:"—" }}</p>
+        </div>
+        <div class="carte carte-p">
+          <p class="mini" style="margin:0 0 2px">Départs par jour</p>
+          <p class="donnee">{{ resume_axe.trips_per_day }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <h2 style="margin-bottom:12px">Questions fréquentes</h2>
+      <div class="faq">
+        <details open>
+          <summary>Quel est le prix d'un billet {{ ville_depart.name }} – {{ ville_arrivee.name }} ?</summary>
+          <div class="rep">
+            {% if resume_axe.max_price and resume_axe.max_price != resume_axe.min_price %}
+              Entre {{ resume_axe.min_price|fcfa }} et {{ resume_axe.max_price|fcfa }} FCFA selon la compagnie, l'horaire et le niveau de confort. Les départs du matin avec escale sont en général les moins chers ; les cars VIP et VVIP directs coûtent plus cher.
+            {% else %}
+              {{ resume_axe.min_price|fcfa }} FCFA, prix total frais de service inclus.
+            {% endif %}
+          </div>
+        </details>
+        <details>
+          <summary>Combien de temps dure le trajet ?</summary>
+          <div class="rep">
+            {% if resume_axe.max_duration and resume_axe.max_duration != resume_axe.min_duration %}
+              Entre {{ resume_axe.min_duration|duree }} pour un direct et {{ resume_axe.max_duration|duree }} pour un départ avec escale.
+            {% else %}
+              Environ {{ resume_axe.min_duration|duree }}, hors aléas de route.
+            {% endif %}
+          </div>
+        </details>
+        <details>
+          <summary>Peut-on descendre à une escale ?</summary>
+          <div class="rep">Oui : c'est le même bus qui continue jusqu'à la destination finale, vous ne payez que jusqu'à votre arrêt. Le prix du tronçon s'affiche au moment de la réservation.</div>
+        </details>
+        <details>
+          <summary>Faut-il créer un compte pour réserver ?</summary>
+          <div class="rep">Non. Votre numéro de téléphone suffit : le billet arrive par SMS. Un compte reste utile pour retrouver l'historique de vos voyages.</div>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  {% if autres_destinations %}
+  <div class="zone" style="margin-top:36px">
+    <h3 style="margin-bottom:14px">Autres destinations au départ de {{ ville_depart.name }}</h3>
+    <div class="liens">
+      {% for a in autres_destinations %}
+        <a href="{% url 'web:resultats' origine=a.origin_city.slug destination=a.destination_city.slug %}">
+          {{ ville_depart.name }} → {{ a.destination_city.name }}
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}

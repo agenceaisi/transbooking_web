@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load transbooking %}
+{% block titre %}Page opérateur simulée — développement{% endblock %}
+
+{% block contenu %}
+<div class="zone-etroite" style="padding:40px 0">
+
+  <div class="bandeau b-att" style="margin-bottom:20px">
+    <span class="ic">!</span>
+    <div>
+      <b>Page de développement.</b> Elle tient lieu de la page Orange Money tant que le
+      compte marchand n'est pas ouvert. Elle n'existe pas hors <code class="code">DEBUG</code>.
+    </div>
+  </div>
+
+  <div class="carte carte-p">
+    <h2 style="margin-bottom:4px">Confirmer le paiement</h2>
+    <p class="gris" style="margin-bottom:18px">
+      Marchand : TransBooking BF · Référence {{ paiement.provider_ref }}
+    </p>
+
+    <div class="billet-rang"><span class="gris">Montant</span>
+      <span class="donnee">{{ paiement.amount|fcfa }} FCFA</span></div>
+    <div class="billet-rang"><span class="gris">Billet</span>
+      <b class="code">{{ reservation.ticket_number }}</b></div>
+
+    <div class="champ" style="margin-top:16px">
+      <label for="pin">Code secret</label>
+      <input id="pin" type="password" inputmode="numeric" maxlength="4" placeholder="••••">
+    </div>
+    <p class="aide-champ">Le code n'est pas vérifié : cette page ne simule que l'issue.</p>
+
+    <form method="post" class="rang" style="margin-top:18px;gap:10px">
+      {% csrf_token %}
+      <button class="btn btn-p" name="decision" value="valider" type="submit">Valider le paiement</button>
+      <button class="btn btn-s" name="decision" value="annuler" type="submit">Annuler</button>
+    </form>
+  </div>
+
+  <div class="carte carte-p" style="margin-top:16px">
+    <h3 style="margin-bottom:6px">Scénario rejoué : <span class="code">{{ scenario }}</span></h3>
+    <p class="gris" style="margin:0">{{ explication }}</p>
+    <p class="micro" style="margin-top:10px">
+      Le scénario se lit dans les deux derniers chiffres du montant. Changez le prix du
+      voyage pour en rejouer un autre : <span class="code">…01</span> annulation,
+      <span class="code">…02</span> expiration, <span class="code">…03</span> notification perdue,
+      <span class="code">…04</span> notification doublée, <span class="code">…05</span> montant divergent.
+    </p>
+  </div>
+</div>
+{% endblock %}

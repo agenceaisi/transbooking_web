@@ -1,0 +1,51 @@
+{% extends "espace/base_espace.html" %}
+{% load transbooking %}
+{% block titre %}Noter mon voyage — TransBooking BF{% endblock %}
+
+{% block contenu %}
+<div class="zone-etroite" style="padding:32px 0 48px;max-width:760px">
+
+  <div class="carte carte-p rang" style="margin-bottom:24px">
+    <span class="sigle" style="background:{{ trajet.route.company.primary_color|couleur_sure }}">
+      {% if trajet.route.company.sigle %}{{ trajet.route.company.sigle|initiales }}{% else %}{{ trajet.route.company.name|initiales }}{% endif %}
+    </span>
+    <div style="flex:1">
+      <b>{{ trajet.route.company.name }} · {{ trajet.route.origin_city.name }} → {{ trajet.route.destination_city.name }}</b>
+      <div class="mini">{{ trajet.departure_time|date:"l j F" }} · {{ trajet.departure_time|time:"H:i" }}</div>
+    </div>
+  </div>
+
+  <h1 style="margin-bottom:6px">Comment s'est passé le voyage ?</h1>
+  <p class="plomb" style="margin-bottom:22px">Votre note nous aide à améliorer nos services.</p>
+
+  <form method="post">
+    {% csrf_token %}
+    <div class="pile pile-4">
+      <div class="carte carte-p" style="text-align:center">
+        <div class="mini fort" style="margin-bottom:10px">Note globale</div>
+        <div class="notation" style="justify-content:center;font-size:38px">
+          {% for n in "54321" %}
+            <input type="radio" name="rating" id="etoile{{ n }}" value="{{ n }}" {% if form.rating.value == n %}checked{% endif %}>
+            <label for="etoile{{ n }}" title="{{ n }}">★</label>
+          {% endfor %}
+        </div>
+        {% if form.rating.errors %}<div class="aide-erreur">{{ form.rating.errors.0 }}</div>{% endif %}
+      </div>
+
+      <div class="carte carte-p">
+        <h3 style="margin-bottom:14px">Votre commentaire</h3>
+        <div class="champ" style="min-height:110px">
+          <label for="{{ form.comment.id_for_label }}">Commentaire — facultatif</label>
+          {{ form.comment }}
+        </div>
+        <p class="aide-champ">Publié sous « {{ user.prenom }} {{ user.nom|first }}. ». Votre numéro n'apparaît jamais.</p>
+      </div>
+
+      <div class="rang" style="gap:12px">
+        <button class="btn btn-p" type="submit">Publier mon avis</button>
+        <a class="btn-texte" href="{% url 'web:espace-tableau-de-bord' %}">Plus tard</a>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}

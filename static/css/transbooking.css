@@ -1,0 +1,1024 @@
+/* ==========================================================================
+   TRANSBOOKING BF — FEUILLE DE STYLE PARTAGÉE
+   Système de design v5.0 · août 2026 — révision « densité »
+   Source unique de vérité pour le site web rendu côté serveur.
+
+   Ce qui change depuis la v4.0, et pourquoi.
+
+   La v4.0 reprenait les mécaniques d'un comparateur international : grandes
+   respirations, une carte par élément, beaucoup de blanc. C'est juste quand on
+   vend un vol par écran. Ici on vend douze départs Ouaga–Bobo dans la même
+   matinée, à quelqu'un debout dans une gare, sur un téléphone d'entrée de
+   gamme. La v5.0 resserre :
+
+     · chrome d'interface à 15 px, interlignes à 1,5 ;
+     · sections à 48 px au lieu de 76 ;
+     · les départs deviennent des **lignes** de liste, plus des cartes empilées :
+       neuf tiennent à l'écran là où quatre y tenaient ;
+     · l'indigo devient une **surface**, pas un filet — bande pleine en tête de
+       page, panneau blanc posé dessus ;
+     · rail de filtres permanent à gauche sur grand écran.
+
+   Ce qui ne change pas : la palette, IBM Plex, les contrastes AA, le plancher
+   de lisibilité à 14 px. La densité se gagne sur l'espace, jamais sur la
+   taille du texte — un écran de 5 pouces en plein soleil ne pardonne pas.
+
+   Ordre des blocs — il détermine la cascade, ne pas réorganiser :
+     01 Jetons            06 Champs               11 Résultats de recherche
+     02 Réinitialisation  07 Étiquettes           12 Back-office
+     03 Typographie       08 Panneau de recherche 13 Mode hors ligne
+     04 Mise en page      09 Départs & trajets    14 Adaptations d'écran
+     05 Boutons           10 Cartes & listes      15 Impression
+                                                   16 Espace voyageur
+   ========================================================================== */
+
+/* ============================ 01 · JETONS ============================ */
+:root{
+  /* --- Indigo · couleur de marque ET couleur d'action. --- */
+  --i50:#F1F3F7; --i100:#E4E8EF; --i300:#7C8CAA; --i500:#2E4368; --i700:#1B2A4A; --i900:#12203A;
+
+  /* --- Laiton · étoiles de notation et mentions premium uniquement. --- */
+  --l50:#F6F1E7; --l100:#EDE3CE; --l300:#C9AD74; --l500:#A8823D; --l700:#7A5F28;
+
+  /* --- Neutres --- */
+  --blanc:#FFFFFF; --gris-fond:#F4F6FA; --n200:#ECEFF4; --n300:#DDE2EA; --n400:#C3C9D4;
+  --ardoise:#5C6470; --encre:#161616;
+
+  /* --- Sémantiques · AA sur blanc et sur gris clair. --- */
+  --succes:#0D7D4D;    --succes-fond:#E8F5EE;
+  --info:#1E51A4;      --info-fond:#E8EFFB;
+  --attention:#A05D17; --attention-fond:#FDF1E1;
+  --erreur:#C3324B;    --erreur-fond:#FBEAEA;
+  --neutre:#5C6470;
+
+  /* --- Typographie --- */
+  --ui:'IBM Plex Sans','Roboto',system-ui,-apple-system,sans-serif;
+  --code:'IBM Plex Mono',ui-monospace,monospace;
+
+  /* --- Ombres · plus courtes qu'en v4.0. Une ombre longue sur une liste
+         dense produit une bouillie grise ; on garde la portée pour ce qui
+         flotte vraiment (panneau de recherche, menus). --- */
+  --ombre-s:0 1px 2px rgba(17,18,54,.06), 0 1px 3px rgba(17,18,54,.05);
+  --ombre-m:0 2px 5px rgba(17,18,54,.07), 0 6px 16px rgba(17,18,54,.08);
+  --ombre-l:0 6px 18px rgba(17,18,54,.10), 0 22px 60px rgba(17,18,54,.16);
+
+  /* --- Formes --- */
+  --r-s:8px;    /* boutons, étiquettes */
+  --r-m:10px;   /* champs, cartes — 12 px en v4.0 */
+  --r-l:16px;   /* panneau de recherche */
+  --r-xl:22px;
+  --r-plein:999px;
+
+  /* --- Espacement · multiples de 4 --- */
+  --e1:4px; --e2:8px; --e3:12px; --e4:16px; --e5:20px; --e6:24px;
+  --e8:32px; --e10:40px; --e12:48px; --e14:56px;
+
+  --max:1240px;
+  --max-texte:70ch;
+  --marge:24px;
+  --rail:248px;
+}
+
+/* ======================= 02 · RÉINITIALISATION ======================= */
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{
+  font-family:var(--ui);font-size:15px;line-height:1.5;color:var(--encre);
+  background:var(--gris-fond);
+  -webkit-font-smoothing:antialiased;
+  font-variant-numeric:tabular-nums;font-feature-settings:"tnum";
+}
+img,svg{display:block;max-width:100%}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid #6D9FEB;outline-offset:2px;border-radius:6px}
+.saut{position:absolute;left:-9999px}
+.saut:focus{left:12px;top:12px;z-index:200;background:#fff;padding:10px 16px;
+  border-radius:var(--r-s);box-shadow:var(--ombre-m)}
+[hidden]{display:none!important}
+
+/* ========================= 03 · TYPOGRAPHIE =========================
+   Titres réduits d'un cran par rapport à la v4.0 : un h1 de 52 px sur une
+   page de résultats repousse le premier départ sous la ligne de flottaison.
+   Le plancher reste à 14 px.
+   ==================================================================== */
+h1,h2,h3,h4{font-weight:700;line-height:1.16;letter-spacing:-.022em;text-wrap:balance}
+h1{font-size:clamp(28px,3.6vw,42px);line-height:1.08;letter-spacing:-.03em}
+h2{font-size:clamp(21px,2.4vw,28px);letter-spacing:-.024em}
+h3{font-size:18px;letter-spacing:-.014em;line-height:1.3}
+h4{font-size:16px;letter-spacing:-.01em}
+.plomb{font-size:17px;line-height:1.5;color:var(--ardoise)}
+.mini{font-size:14px;line-height:1.45;color:var(--ardoise)}
+.micro{font-size:13px;line-height:1.4;color:var(--ardoise)}
+.donnee{font-size:20px;font-weight:700;letter-spacing:-.02em;line-height:1.15}
+.kpi{font-size:34px;font-weight:700;letter-spacing:-.03em;line-height:1}
+.code{font-family:var(--code);font-weight:500}
+.gris{color:var(--ardoise)}
+.fort{font-weight:600}
+p{max-width:var(--max-texte)}
+.rubrique{font-size:12px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--ardoise)}
+
+/* Logotype */
+.logo{display:flex;align-items:center;gap:9px;flex:none}
+.logo .m{width:34px;height:34px;border-radius:9px;background:var(--i700);
+  display:grid;place-items:center;flex:none;color:#fff}
+.logo b{display:block;font-size:16px;font-weight:700;letter-spacing:-.02em;line-height:1.1}
+
+/* ========================= 04 · MISE EN PAGE ========================= */
+.zone{max-width:var(--max);margin:0 auto;padding:0 var(--marge)}
+.zone-etroite{max-width:900px;margin:0 auto;padding:0 var(--marge)}
+.section{padding:48px 0}
+.section-mince{padding:32px 0}
+.fond-blanc{background:var(--blanc)}
+.fond-gris{background:var(--gris-fond)}
+.fond-indigo{background:var(--i700);color:#fff}
+.tete{max-width:58ch;margin-bottom:24px}
+.tete h2{margin-bottom:8px}
+.tete p{color:var(--ardoise);font-size:16px}
+.rang{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.rang .fin{margin-left:auto}
+.grille{display:grid;gap:16px}
+.grille>*{min-width:0}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.pile{display:flex;flex-direction:column}
+.pile-2{gap:8px} .pile-3{gap:12px} .pile-4{gap:16px} .pile-6{gap:24px}
+
+/* En-tête de site — blanche, filet d'un pixel, hauteur 60. */
+.entete{background:#fff;box-shadow:0 1px 0 var(--n200);position:sticky;top:0;z-index:50}
+.entete .zone{display:flex;align-items:center;gap:26px;height:60px}
+.nav-site{display:flex;gap:20px;font-size:15px;font-weight:500}
+.nav-site a{color:var(--ardoise);padding:4px 0;border-bottom:2px solid transparent}
+.nav-site a:hover{color:var(--i700)}
+.nav-site a[aria-current="page"]{color:var(--i700);font-weight:600;border-bottom-color:var(--i700)}
+.actions-entete{margin-left:auto;display:flex;align-items:center;gap:14px;font-size:14.5px}
+.lien-app{display:inline-flex;align-items:center;gap:7px;color:var(--ardoise);font-weight:500}
+.lien-app:hover{color:var(--i700)}
+
+/* =========================== 05 · BOUTONS ===========================
+   Hauteur 44 px (48 en v4.0). Sur une ligne de résultat, 48 px imposaient
+   une hauteur de rangée qu'aucun contenu ne justifiait.
+   ==================================================================== */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;padding:0 20px;
+  border-radius:var(--r-s);font-size:15px;font-weight:600;white-space:nowrap;
+  border:1.5px solid transparent;transition:background-color .15s,border-color .15s,color .15s,transform .1s}
+.btn:active{transform:translateY(1px)}
+.btn-p{background:var(--i700);color:#fff}
+.btn-p:hover{background:var(--i500)}
+.btn-s{background:#fff;color:var(--i700);border-color:var(--n400)}
+.btn-s:hover{border-color:var(--i700);background:var(--i50)}
+.btn-clair{background:rgba(255,255,255,.14);color:#fff;border-color:rgba(255,255,255,.34)}
+.btn-clair:hover{background:rgba(255,255,255,.22)}
+.btn-inverse{background:#fff;color:var(--i700)}
+.btn-destructif{background:var(--erreur);color:#fff}
+.btn-sm{height:36px;padding:0 14px;font-size:14px}
+.btn-bloc{width:100%}
+.btn[disabled],.btn[aria-disabled="true"]{opacity:.45;pointer-events:none}
+.btn-texte{color:var(--i700);font-weight:600;display:inline-flex;align-items:center;gap:5px}
+.btn-texte:hover{text-decoration:underline;text-underline-offset:3px}
+
+/* =========================== 06 · CHAMPS =========================== */
+.champ{position:relative;background:var(--gris-fond);border-radius:var(--r-m);padding:7px 12px;
+  border:1.5px solid transparent;transition:border-color .15s,background .15s,box-shadow .15s;min-width:0}
+.champ:focus-within{border-color:var(--i700);background:#fff;box-shadow:0 0 0 3px var(--i100)}
+.champ label{display:block;font-size:12px;font-weight:600;color:var(--ardoise);
+  letter-spacing:.02em;margin-bottom:1px}
+.champ input,.champ select,.champ textarea{width:100%;border:0;background:transparent;outline:none;
+  font-size:16px;font-weight:600;padding:0;height:24px}
+.champ select{cursor:pointer;appearance:none}
+.champ-erreur{border-color:var(--erreur);background:var(--erreur-fond)}
+.aide-champ{font-size:13.5px;color:var(--ardoise);margin-top:5px}
+.coche{display:flex;align-items:center;gap:9px;cursor:pointer;font-size:14.5px;line-height:1.35}
+.coche input{width:17px;height:17px;accent-color:var(--i700);flex:none}
+.coche .nb{margin-left:auto;font-size:13px;color:var(--ardoise);font-variant-numeric:tabular-nums}
+.coche:hover{color:var(--i700)}
+
+/* `.coche` sert aussi de lien-case-a-cocher (rail de filtres, section 11c) :
+   pas de vrai `<input>` — un `<a role="checkbox">` de navigation pure, sans
+   formulaire a soumettre — donc une case dessinee en CSS sur `aria-checked`. */
+.coche .case{width:17px;height:17px;border-radius:5px;border:1.5px solid var(--n400);
+  background:#fff;flex:none;position:relative;transition:background .15s,border-color .15s}
+.coche[aria-checked="true"] .case{background:var(--i700);border-color:var(--i700)}
+.coche[aria-checked="true"] .case::after{content:"";position:absolute;left:5px;top:2px;
+  width:4px;height:8px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+
+/* ========================= 07 · ÉTIQUETTES ========================= */
+.etiq{display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 9px;
+  border-radius:6px;font-size:13px;font-weight:600;white-space:nowrap}
+.e-ok{background:var(--succes-fond);color:var(--succes)}
+.e-info{background:var(--info-fond);color:var(--info)}
+.e-att{background:var(--attention-fond);color:var(--attention)}
+.e-err{background:var(--erreur-fond);color:var(--erreur)}
+.e-neutre{background:var(--i50);color:var(--i500)}
+.e-marque{background:var(--i700);color:#fff}
+
+.bandeau{display:flex;gap:11px;align-items:flex-start;padding:12px 16px;border-radius:var(--r-m);font-size:14.5px}
+.bandeau .ic{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;color:#fff;
+  font-size:12px;flex:none;margin-top:1px}
+.b-ok{background:var(--succes-fond);color:var(--succes)} .b-ok .ic{background:var(--succes)}
+.b-info{background:var(--info-fond);color:var(--info)}   .b-info .ic{background:var(--info)}
+.b-att{background:var(--attention-fond);color:var(--attention)} .b-att .ic{background:var(--attention)}
+.b-err{background:var(--erreur-fond);color:var(--erreur)} .b-err .ic{background:var(--erreur)}
+
+/* ==================== 08 · PANNEAU DE RECHERCHE ==================== */
+.heros{background:var(--i700);color:#fff;padding:44px 0 104px;position:relative;overflow:hidden}
+.heros::before{content:"";position:absolute;inset:0;
+  background:radial-gradient(880px 460px at 84% -24%,rgba(109,159,235,.34),transparent 62%)}
+.heros .zone{position:relative;z-index:2}
+.heros h1{max-width:17ch}
+.heros p{color:rgba(255,255,255,.82);font-size:18px;max-width:46ch;margin-top:12px}
+
+/* Bande compacte des pages intérieures : l'indigo reste une surface, mais
+   n'occupe plus qu'une centaine de pixels — la liste doit rester visible. */
+.bande{background:var(--i700);color:#fff;padding:20px 0 68px;position:relative;overflow:hidden}
+.bande::before{content:"";position:absolute;inset:0;
+  background:radial-gradient(700px 320px at 88% -40%,rgba(109,159,235,.30),transparent 60%)}
+.bande .zone{position:relative;z-index:2}
+.fil{display:flex;align-items:center;gap:8px;font-size:13.5px;color:rgba(255,255,255,.72)}
+.fil a:hover{color:#fff;text-decoration:underline;text-underline-offset:3px}
+.fil span{opacity:.55}
+
+.panneau-recherche{margin-top:-52px;position:relative;z-index:5}
+.panneau{background:#fff;border-radius:var(--r-l);box-shadow:var(--ombre-l);padding:6px 6px 16px}
+.panneau-compact{padding:12px;border-radius:var(--r-m)}
+.onglets{display:flex;gap:3px;padding:6px 6px 12px;overflow-x:auto;scrollbar-width:none}
+.onglets::-webkit-scrollbar{display:none}
+.onglets button{display:flex;align-items:center;gap:7px;height:38px;padding:0 14px;
+  border-radius:var(--r-plein);font-size:14.5px;font-weight:600;color:var(--ardoise);white-space:nowrap;flex:none;
+  transition:background .15s,color .15s}
+.onglets button:hover{background:var(--i50)}
+.onglets button[aria-selected="true"]{background:var(--i700);color:#fff}
+.corps-panneau{padding:0 10px}
+.champs{display:grid;grid-template-columns:1.2fr 1.2fr 1fr .8fr auto;gap:8px;align-items:stretch}
+.champs-compact{grid-template-columns:1.15fr 1.15fr .95fr .8fr auto;gap:8px}
+.echange{position:absolute;right:-17px;top:50%;transform:translateY(-50%);z-index:6;width:32px;height:32px;
+  border-radius:50%;background:#fff;box-shadow:var(--ombre-s);display:grid;place-items:center;color:var(--i700);
+  transition:transform .2s}
+.echange:hover{background:var(--i50);transform:translateY(-50%) rotate(180deg)}
+.btn-chercher{height:auto;min-height:58px;padding:0 26px;font-size:16px;border-radius:var(--r-m)}
+.btn-chercher-compact{min-height:52px;padding:0 22px}
+
+/* ==================== 09 · DÉPARTS & TRAJETS ======================= */
+.parcours{display:flex;align-items:center;gap:16px}
+.parcours>*{min-width:0}
+.h{font-size:19px;font-weight:700;letter-spacing:-.02em;line-height:1.15}
+.h s{color:var(--n400);font-size:14px;font-weight:400;margin-right:6px}
+.lieu{font-size:13.5px;color:var(--ardoise);white-space:nowrap}
+.milieu{flex:1;text-align:center;min-width:0}
+/* `min-width:0` est ce qui autorise le segment central à rétrécir. Sans lui,
+   une liste d'escales un peu longue déborde sur l'heure d'arrivée : un élément
+   flex refuse par défaut de descendre sous la largeur de son contenu. */
+.milieu .d{font-size:13.5px;color:var(--ardoise);white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+.trace{position:relative;height:2px;background:var(--n300);border-radius:2px;margin:7px 0 5px}
+.trace::before,.trace::after{content:"";position:absolute;top:-3px;width:8px;height:8px;
+  border-radius:50%;background:var(--i700)}
+.trace::before{left:0}
+.trace::after{right:0}
+.trace i{position:absolute;top:-2px;width:6px;height:6px;border-radius:50%;background:var(--n400);
+  transform:translateX(-50%)}
+.sigle{width:38px;height:38px;border-radius:9px;display:grid;place-items:center;color:#fff;
+  font-size:11.5px;font-weight:700;flex:none;letter-spacing:.02em}
+.etoiles{color:var(--l500);letter-spacing:.5px;font-size:13px}
+.etoiles .v{color:var(--n300)}
+
+/* ==================== 10 · CARTES & LISTES ========================= */
+.carte{background:#fff;border-radius:var(--r-m);box-shadow:var(--ombre-s)}
+.carte-p{padding:18px 20px}
+.carte-liante{transition:box-shadow .18s,transform .18s}
+.carte-liante:hover{box-shadow:var(--ombre-m);transform:translateY(-2px)}
+.liens{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px 28px}
+.liens a{font-size:14.5px;padding:5px 0;color:var(--ardoise)}
+.liens a:hover{color:var(--i700);text-decoration:underline;text-underline-offset:3px}
+.faq details{background:#fff;border-radius:var(--r-m);box-shadow:var(--ombre-s);margin-bottom:8px}
+.faq summary{padding:16px 20px;font-size:16px;font-weight:600;cursor:pointer;list-style:none;
+  display:flex;gap:16px;align-items:center}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"";margin-left:auto;width:9px;height:9px;
+  border-right:2.5px solid var(--ardoise);border-bottom:2.5px solid var(--ardoise);
+  transform:rotate(45deg);transition:transform .2s;flex:none;margin-top:-4px}
+.faq details[open] summary::after{transform:rotate(-135deg);margin-top:3px}
+.faq .rep{padding:0 20px 18px;color:var(--ardoise);font-size:15px;max-width:74ch}
+
+/* ================ 11 · RÉSULTATS DE RECHERCHE ======================
+   Le cœur de la v5.0. Un départ est une **ligne**, pas une carte : les
+   lignes partagent un conteneur, se séparent d'un filet d'un pixel et se
+   parcourent à la verticale sans que l'œil ait à traverser des marges.
+   Neuf départs tiennent à l'écran là où quatre y tenaient en v4.0.
+   ==================================================================== */
+.cadre-resultats{display:grid;grid-template-columns:var(--rail) minmax(0,1fr);gap:20px;
+  align-items:start;padding:24px 0 48px}
+
+/* --- Rail de filtres --- */
+.rail-filtres{position:sticky;top:76px;background:#fff;border-radius:var(--r-m);
+  box-shadow:var(--ombre-s);padding:4px 0}
+.titre-rail{display:none;padding:14px 16px 0;font-size:15px;font-weight:700;letter-spacing:-.01em}
+.groupe-filtre{padding:14px 16px;border-top:1px solid var(--n200)}
+.groupe-filtre:first-child{border-top:0}
+.groupe-filtre h3{font-size:14.5px;font-weight:600;letter-spacing:0;margin-bottom:10px;
+  display:flex;align-items:center}
+.groupe-filtre h3 .raz{margin-left:auto;font-size:13px;font-weight:500;color:var(--i700)}
+.groupe-filtre .pile-2>*{padding:1px 0}
+.plage{display:flex;align-items:center;gap:10px;font-size:13.5px;color:var(--ardoise)}
+.piste{position:relative;height:4px;border-radius:2px;background:var(--n200);flex:1}
+.piste i{position:absolute;top:0;height:4px;border-radius:2px;background:var(--i700);left:8%;right:22%}
+.piste b{position:absolute;top:-5px;width:14px;height:14px;border-radius:50%;background:#fff;
+  box-shadow:0 0 0 2px var(--i700),var(--ombre-s)}
+.piste b.g{left:6%} .piste b.d{right:20%}
+.tranches{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.tranche{border:1.5px solid var(--n300);border-radius:var(--r-s);padding:7px 8px;text-align:center;
+  transition:border-color .15s,background .15s}
+.tranche:hover{border-color:var(--i700)}
+.tranche[aria-pressed="true"]{border-color:var(--i700);background:var(--i50)}
+.tranche b{display:block;font-size:13.5px;font-weight:600}
+.tranche span{display:block;font-size:12px;color:var(--ardoise)}
+
+/* Formulaire de prix : deux champs numeriques pilotent le filtre, la piste
+   au-dessus n'en est que la lecture visuelle (cf. `views._plage_prix`). */
+.form-prix{margin-top:10px}
+.champs-prix{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+.champs-prix input{-moz-appearance:textfield}
+.champs-prix input::-webkit-outer-spin-button,
+.champs-prix input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+
+/* --- Bandeau de tri + compte --- */
+.barre-tri{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.compte{font-size:14.5px;color:var(--ardoise)}
+.compte b{color:var(--encre);font-weight:600}
+.tri{display:flex;gap:2px;background:#fff;border-radius:var(--r-s);padding:3px;
+  box-shadow:var(--ombre-s);margin-left:auto}
+.tri button{height:32px;padding:0 13px;border-radius:6px;font-size:13.5px;font-weight:600;
+  color:var(--ardoise);white-space:nowrap;transition:background .15s,color .15s}
+.tri button:hover{color:var(--i700)}
+.tri button[aria-pressed="true"]{background:var(--i700);color:#fff}
+
+/* --- Bande des jours : le prix le plus bas par date --- */
+.jours{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px;scrollbar-width:none}
+.jours::-webkit-scrollbar{display:none}
+.jour{flex:1;min-width:88px;background:#fff;border-radius:var(--r-s);padding:8px 6px;text-align:center;
+  box-shadow:var(--ombre-s);border:1.5px solid transparent;transition:border-color .15s,transform .12s}
+.jour:hover{border-color:var(--n400);transform:translateY(-1px)}
+.jour[aria-current="date"]{border-color:var(--i700);background:var(--i50)}
+.jour .j{display:block;font-size:12.5px;color:var(--ardoise)}
+.jour .p{display:block;font-size:14.5px;font-weight:700;margin-top:1px}
+.jour.bas .p{color:var(--succes)}
+
+/* --- La ligne de départ ---
+   `overflow` reste ouvert (pas de `hidden`) : les fenêtres au survol du
+   véhicule, du trajet et des gares (section 11a) sont des enfants absolus de
+   la ligne et doivent pouvoir déborder au-dessus des lignes suivantes. Les
+   coins arrondis du conteneur se recréent donc à la main sur la première et
+   la dernière ligne plutôt que par un `overflow:hidden` sur `.liste-departs`. */
+.liste-departs{background:#fff;border-radius:var(--r-m);box-shadow:var(--ombre-s)}
+.ligne{display:grid;grid-template-columns:232px minmax(0,1fr) 178px;gap:18px;align-items:center;
+  padding:12px 18px;border-top:1px solid var(--n200);position:relative;
+  transition:background .14s,box-shadow .14s}
+.ligne:first-child{border-top:0;border-radius:var(--r-m) var(--r-m) 0 0}
+.ligne:last-child{border-radius:0 0 var(--r-m) var(--r-m)}
+.ligne:hover{background:var(--gris-fond)}
+.ligne>*{min-width:0}
+
+.ligne .cie{display:flex;align-items:flex-start;gap:10px}
+.ligne .cie .nom{font-size:14.5px;font-weight:600;line-height:1.25;display:block}
+.ligne .cie .note{display:flex;align-items:center;gap:5px;font-size:12.5px;color:var(--ardoise);
+  margin-top:1px;white-space:nowrap}
+.ligne .cie .note b{color:var(--encre);font-weight:600}
+
+.services{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px}
+.service{font-size:11px;font-weight:500;color:var(--ardoise);background:var(--gris-fond);
+  border-radius:4px;padding:1px 5px;white-space:nowrap;line-height:1.5}
+
+.ligne .fin{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+.ligne .prix{font-size:22px;font-weight:700;letter-spacing:-.026em;white-space:nowrap;line-height:1.1}
+.ligne .prix span{font-size:13px;font-weight:500;color:var(--ardoise);margin-left:3px}
+.ligne .btn{width:100%}
+.reste{font-size:12.5px;font-weight:600;color:var(--attention);white-space:nowrap}
+.reste.calme{color:var(--ardoise);font-weight:500}
+
+/* Ruban « moins cher » — une seule ligne peut le porter. */
+.ruban{position:absolute;top:0;left:0;background:var(--succes);color:#fff;font-size:11px;
+  font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:2px 9px;
+  border-radius:0 0 var(--r-s) 0}
+.ligne.mise-en-avant{background:linear-gradient(90deg,var(--succes-fond),transparent 42%);
+  padding-top:26px}
+.ligne.mise-en-avant:hover{background:linear-gradient(90deg,var(--succes-fond),var(--gris-fond) 42%)}
+
+/* Rotation des prochains departs (accueil) : groupes de 5, un a la fois. */
+.page-departs[hidden]{display:none}
+.pagination-departs{display:flex;justify-content:center;gap:8px;margin-top:14px}
+.pagination-departs:empty{display:none}
+.pagination-departs button{width:8px;height:8px;padding:0;border:0;border-radius:50%;
+  background:var(--n300);cursor:pointer}
+.pagination-departs button[aria-current="true"]{width:22px;border-radius:5px;background:var(--i700)}
+
+/* Détail dépliable : escales et prix par tronçon */
+.ligne-detail{border-top:1px solid var(--n200);background:var(--gris-fond);padding:14px 18px}
+.arret{display:grid;grid-template-columns:16px 1fr auto;gap:12px;align-items:center;
+  padding:9px 0;position:relative}
+.arret::before{content:"";position:absolute;left:7px;top:0;bottom:0;width:2px;background:var(--n300)}
+.arret:first-child::before{top:50%}
+.arret:last-child::before{bottom:50%}
+.arret .pt{width:16px;height:16px;border-radius:50%;background:#fff;border:2px solid var(--n400);z-index:1}
+.arret.borne .pt{border-color:var(--i700);background:var(--i700)}
+.arret .hh{font-size:13.5px;color:var(--ardoise)}
+.arret .prix-troncon{font-size:14px;font-weight:700;padding:5px 11px;border-radius:var(--r-s);
+  background:#fff;box-shadow:var(--ombre-s)}
+
+/* Squelette de chargement — la liste garde sa forme pendant le filtrage. */
+.squelette{background:linear-gradient(90deg,var(--n200) 25%,var(--n300) 37%,var(--n200) 63%);
+  background-size:400% 100%;animation:glisse 1.4s ease-in-out infinite;border-radius:5px;height:14px}
+@keyframes glisse{0%{background-position:100% 0}100%{background-position:0 0}}
+
+/* =============== 11a · CONFORT & FENÊTRES AU SURVOL =================
+   Trois questions, trois déclencheurs, trois fenêtres — pas une fiche unique
+   qui répondrait à tout et qu'on lirait jamais entière :
+     · le véhicule (bloc compagnie)    → confort réel, gabarit, immatriculation
+     · le trajet (segment central)     → durée, distance, escales
+     · chaque gare (départ, arrivée)   → adresse, ville, région
+   Les badges de confort, eux, restent visibles en permanence : le survol
+   n'ajoute que le détail, jamais l'existence de l'information.
+
+   `.declencheur` porte un `padding-bottom` compensé par un `margin-bottom`
+   négatif de même valeur (donc une hauteur de boîte inchangée) : la zone de
+   survol s'étend ainsi jusqu'au bord de la fenêtre, qui s'ouvre à `top:100%`
+   sans intervalle. Sans ce pont, le pixel vide entre la ligne et la fenêtre
+   referme celle-ci avant que le pointeur ne l'atteigne — le défaut classique
+   des info-bulles CSS pures.
+
+   `@media(hover:hover)` réserve tout le mécanisme aux pointeurs capables de
+   survoler : sur un écran tactile, rien ne se perd (badges et noms de gare
+   restent lisibles), rien ne colle non plus sous le doigt.
+   ==================================================================== */
+
+/* --- Badges de confort : toujours visibles, sous le nom de la compagnie --- */
+.confort-badges{display:flex;align-items:center;gap:4px;margin-top:6px;flex-wrap:wrap}
+.badge-confort{display:grid;place-items:center;width:22px;height:22px;border-radius:6px;
+  background:var(--gris-fond);color:var(--ardoise);flex:none}
+.badge-confort svg{width:13px;height:13px}
+.badge-confort-plus{display:inline-flex;align-items:center;height:22px;padding:0 6px;
+  font-size:11px;font-weight:700;color:var(--ardoise);flex:none}
+
+/* --- Pastille de palier : Standard en indigo clair, VIP en indigo plein,
+       VVIP dans le laiton — la seule couleur du système réservée jusqu'ici
+       aux étoiles de notation et aux mentions premium. --- */
+.palier-badge{display:inline-flex;align-items:center;height:19px;padding:0 7px;border-radius:5px;
+  font-size:10.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;
+  margin-left:7px;vertical-align:1px;white-space:nowrap}
+.palier-standard{background:var(--i50);color:var(--i500)}
+.palier-vip{background:var(--i700);color:#fff}
+.palier-vvip{background:var(--l500);color:#fff}
+
+/* Repliée par défaut : sur un pointeur sans survol (tactile), la fenêtre ne
+   doit jamais devenir un simple bloc de plus au fil du flux — elle reste
+   purement absente tant que `@media(hover:hover)` ne la réactive pas. */
+.info-bulle{display:none}
+
+@media(hover:hover){
+  .declencheur{position:relative;cursor:default;padding-bottom:12px;margin-bottom:-12px}
+
+  .info-bulle{display:block;position:absolute;z-index:60;top:100%;width:280px;text-align:left;
+    background:#fff;border-radius:var(--r-m);box-shadow:var(--ombre-l);padding:14px 16px;
+    opacity:0;visibility:hidden;pointer-events:none;transform:translateY(-3px);
+    transition:opacity .14s ease,transform .14s ease,visibility .14s}
+  .info-bulle::before{content:"";position:absolute;top:-5px;width:11px;height:11px;
+    background:#fff;transform:rotate(45deg);border-radius:2px;box-shadow:-1px -1px 2px rgba(17,18,54,.05)}
+  .declencheur:hover .info-bulle,
+  .declencheur:focus-within .info-bulle{opacity:1;visibility:visible;pointer-events:auto;transform:translateY(0)}
+
+  .info-bulle-vehicule{left:0}
+  .info-bulle-vehicule::before{left:20px}
+  .info-bulle-trajet{left:50%;margin-left:-150px;width:300px}
+  .info-bulle-trajet::before{left:50%;margin-left:-6px}
+  .info-bulle-gare{width:250px}
+  .info-bulle-depart{left:0}
+  .info-bulle-depart::before{left:14px}
+  .info-bulle-arrivee{right:0}
+  .info-bulle-arrivee::before{right:14px}
+
+  .ib-tete{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+  .ib-tete b{font-size:14.5px;font-weight:700;letter-spacing:-.01em}
+  .ib-desc{font-size:13px;color:var(--ardoise);line-height:1.42;margin:3px 0 11px}
+  .ib-liste{display:flex;flex-direction:column;gap:7px}
+  .ib-liste li{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--encre)}
+  .ib-liste svg{width:15px;height:15px;color:var(--i700);flex:none}
+  .ib-pied{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;
+    padding-top:10px;border-top:1px solid var(--n200);font-size:12.5px;color:var(--ardoise)}
+  .ib-pied .code{font-family:var(--code);color:var(--encre)}
+
+  .ib-etapes{list-style:none;display:flex;flex-direction:column;margin:9px 0 0}
+  .ib-etapes li{position:relative;padding:5px 0 5px 20px;font-size:13px}
+  .ib-etapes li::before{content:"";position:absolute;left:4px;top:50%;width:7px;height:7px;
+    border-radius:50%;background:var(--i700);transform:translateY(-50%)}
+  .ib-etapes li::after{content:"";position:absolute;left:7px;top:0;bottom:0;width:1.5px;background:var(--n300)}
+  .ib-etapes li:first-child::after{top:50%}
+  .ib-etapes li:last-child::after{bottom:50%}
+  .ib-etapes li b{font-weight:600}
+}
+@media print{.info-bulle{display:none!important}}
+
+/* ==================== 11b · TUNNEL DE RESERVATION ==================
+   Trois etapes, un recapitulatif, un billet. Le tunnel emprunte les memes
+   composants que le reste du site : ce qui change d'une etape a l'autre, c'est
+   le contenu, jamais le vocabulaire visuel.
+   ==================================================================== */
+.etapes{display:flex;align-items:center;gap:10px;list-style:none;flex-wrap:wrap;
+  font-size:13.5px;font-weight:600;color:var(--ardoise)}
+.etapes li{display:flex;align-items:center;gap:7px}
+.etapes li+li::before{content:"›";color:var(--n400);margin-right:3px}
+.etapes .pastille{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;
+  font-size:12px;border:1.5px solid var(--n400);color:var(--ardoise);flex:none}
+.etapes .courante{color:var(--i700)}
+.etapes .courante .pastille{border-color:var(--i700);background:var(--i50);color:var(--i700)}
+.etapes .faite{color:var(--i700)}
+.etapes .faite .pastille{border-color:var(--i700);background:var(--i700);color:#fff}
+
+/* Choix du moyen de paiement : une carte cliquable par operateur. La cible
+   tactile couvre toute la ligne, pas seulement le bouton radio. */
+.moyen{display:flex;align-items:center;gap:12px;padding:12px 14px;cursor:pointer;
+  border:1.5px solid var(--n300);border-radius:var(--r-m);background:#fff;
+  transition:border-color .15s,background .15s}
+.moyen:hover{border-color:var(--i700)}
+.moyen:has(input:checked){border-color:var(--i700);background:var(--i50)}
+.moyen input{width:19px;height:19px;accent-color:var(--i700);flex:none}
+.moyen .marque{width:38px;height:38px;border-radius:9px;background:var(--i700);color:#fff;
+  display:grid;place-items:center;font-size:11.5px;font-weight:700;flex:none}
+.moyen .texte{display:flex;flex-direction:column;min-width:0}
+.moyen .texte b{font-size:15px;font-weight:600}
+
+/* Ligne d'un recapitulatif ou d'un billet : libelle a gauche, valeur a droite. */
+.billet-rang{display:flex;justify-content:space-between;align-items:baseline;gap:14px;
+  padding:7px 0;border-bottom:1px dotted var(--n300);font-size:14.5px}
+.billet-rang:last-child{border-bottom:0}
+.billet-rang b{font-weight:600;text-align:right}
+
+/* Le billet lui-meme. La ligne perforee est la signature de la marque : elle ne
+   sert qu'ici, sur les billets et les recus. Les encoches reprennent le fond de
+   la page, sinon elles se voient comme des taches blanches. */
+.billet-page{max-width:520px;margin:0 auto;overflow:hidden}
+.billet-haut{padding:22px 24px}
+.billet-bas{padding:22px 24px}
+.perfore{position:relative;height:0;border-top:2px dotted var(--n300)}
+.perfore::before,.perfore::after{content:"";position:absolute;top:-11px;width:20px;height:20px;
+  border-radius:50%;background:var(--gris-fond)}
+.perfore::before{left:-11px}
+.perfore::after{right:-11px}
+
+/* ========================= 12 · BACK-OFFICE ======================== */
+.rail-lateral{background:var(--i900);color:#fff;padding:16px 0}
+.rail-lateral a{display:flex;align-items:center;padding:10px 18px;font-size:14.5px;
+  color:rgba(255,255,255,.7)}
+.rail-lateral a:hover{color:#fff;background:rgba(255,255,255,.07)}
+.rail-lateral a[aria-current="page"]{background:rgba(255,255,255,.12);color:#fff;font-weight:600}
+.carte-kpi{background:#fff;border-radius:var(--r-m);box-shadow:var(--ombre-s);padding:16px 18px}
+.carte-kpi .lbl{font-size:13.5px;color:var(--ardoise)}
+.carte-kpi .val{font-size:34px;font-weight:700;letter-spacing:-.03em;line-height:1;margin:8px 0 4px}
+.tableau{width:100%;border-collapse:collapse;font-size:14.5px}
+.tableau th{text-align:left;font-size:13px;font-weight:600;color:var(--ardoise);
+  padding:10px 12px;border-bottom:1px solid var(--n300)}
+.tableau td{padding:11px 12px;border-bottom:1px solid var(--n200)}
+.tableau tr:last-child td{border-bottom:0}
+.tableau tbody tr:hover{background:var(--gris-fond)}
+.tableau .num{text-align:right;white-space:nowrap}
+
+/* ====================== 13 · MODE HORS LIGNE ======================= */
+.connexion{display:flex;align-items:center;gap:9px;padding:11px 16px;font-size:14.5px;
+  font-weight:600;color:#fff}
+.connexion .puce{width:9px;height:9px;border-radius:50%;background:#fff;flex:none}
+.c-enligne{background:var(--succes)} .c-synchro{background:var(--info)}
+.c-attente{background:var(--attention)} .c-horsligne{background:var(--ardoise)}
+.c-echec{background:var(--erreur)}
+.clignote{animation:battement 1.6s infinite}
+@keyframes battement{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* Pied de page */
+.pied{background:var(--i900);color:rgba(255,255,255,.72);padding:40px 0 28px;font-size:14.5px}
+.pied h4{color:#fff;font-size:14px;margin-bottom:10px}
+.pied a{display:block;padding:4px 0}
+.pied a:hover{color:#fff}
+.pied .bas{margin-top:28px;padding-top:18px;border-top:1px solid rgba(255,255,255,.14);
+  display:flex;gap:16px;flex-wrap:wrap;align-items:center;font-size:13.5px}
+.badge-store{display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 14px;
+  border:1px solid rgba(255,255,255,.3);border-radius:var(--r-s);color:#fff}
+.badge-store:hover{background:rgba(255,255,255,.1)}
+.badge-store b{display:flex;flex-direction:column;gap:1px;font-size:13px;line-height:1.15}
+.badge-store span{font-size:10.5px;font-weight:500;opacity:.75}
+
+/* Barre d'action mobile */
+.barre-bas{display:none}
+
+/* ==================== 14 · ADAPTATIONS D'ÉCRAN =====================
+   Ce bloc reste en fin de feuille : il doit l'emporter sur les règles
+   déclarées plus haut.
+   ==================================================================== */
+@media(max-width:1100px){
+  .cadre-resultats{grid-template-columns:minmax(0,1fr)}
+  .rail-filtres{position:static;display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+  .groupe-filtre{border-top:0;border-left:1px solid var(--n200)}
+  .groupe-filtre:first-child{border-left:0}
+}
+@media(max-width:1000px){
+  .champs,.champs-compact{grid-template-columns:1fr 1fr}
+  .echange{display:none}
+  .nav-site{display:none}
+}
+@media(max-width:900px){
+  .g3,.g4{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .liens{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ligne{grid-template-columns:minmax(0,1fr) 168px;gap:14px}
+  .ligne .cie{grid-column:1 / -1}
+}
+@media(max-width:820px){
+  .rail-filtres{grid-template-columns:1fr}
+  .groupe-filtre{border-left:0;border-top:1px solid var(--n200)}
+  .groupe-filtre:first-child{border-top:0}
+  /* Sur téléphone, les départs passent devant les filtres : empilé, le rail
+     fait six écrans de haut, et personne ne fait défiler six écrans pour
+     découvrir qu'il y a des bus. Les filtres restent accessibles, en dessous.
+     Le panneau coulissant viendra avec htmx. */
+  /* `align-items:stretch` est indispensable ici : la règle de base porte
+     `align-items:start`, qui dans une colonne flex dimensionne chaque enfant
+     à la largeur de son contenu. La bande des jours (sept vignettes, 652 px)
+     élargissait alors la page entière au lieu de défiler dans son conteneur. */
+  .cadre-resultats{display:flex;flex-direction:column;align-items:stretch}
+  .cadre-resultats>*{min-width:0}
+  .cadre-resultats>main{order:1}
+  .cadre-resultats>.rail-filtres{order:2}
+  .titre-rail{display:block}
+}
+@media(max-width:700px){
+  .section{padding:36px 0}
+  .section-mince{padding:24px 0}
+  .heros{padding:34px 0 92px}
+  .bande{padding:16px 0 60px}
+  .panneau-recherche{margin-top:-46px}
+  .ligne{grid-template-columns:minmax(0,1fr);gap:12px;padding:14px}
+  .ligne .fin{flex-direction:row;align-items:center;justify-content:space-between;text-align:left;
+    width:100%}
+  .ligne .fin .btn{width:auto;padding:0 18px}
+  .barre-tri{gap:8px}
+  .tri{margin-left:0;width:100%;overflow-x:auto}
+}
+@media(max-width:640px){
+  /* Logotype + « Se connecter » suffisent : à 390 px, le lien vers
+     l'application pousse la barre hors de l'écran. Il reste dans le pied. */
+  .lien-app{display:none}
+  .entete .zone{gap:12px}
+}
+@media(max-width:620px){
+  .g2,.g3,.g4{grid-template-columns:1fr}
+  .tranches{grid-template-columns:1fr}
+}
+@media(max-width:600px){
+  /* Villes sur toute la largeur, date et voyageurs côte à côte : quatre
+     champs empilés repoussaient le premier départ de 90 px sous la ligne de
+     flottaison, sur l'écran où elle compte le plus. */
+  .champs,.champs-compact{grid-template-columns:1fr 1fr;gap:6px}
+  .champs>:nth-child(1),.champs>:nth-child(2),.champs>.btn{grid-column:1/-1}
+  .btn-chercher,.btn-chercher-compact{min-height:48px}
+}
+@media(max-width:520px){
+  .liens{grid-template-columns:1fr}
+}
+@media(max-width:420px){
+  :root{--marge:16px}
+  h1{font-size:26px}
+  .btn{white-space:normal;text-align:center;height:auto;min-height:44px;padding:9px 16px;line-height:1.25}
+  .lieu,.milieu .d,.ligne .cie .note{white-space:normal}
+  .parcours{gap:8px}
+  .milieu{min-width:64px}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+}
+
+/* ========================== 15 · IMPRESSION ======================== */
+@media print{
+  body{background:#fff;font-size:12pt}
+  .entete,.heros,.bande,.panneau-recherche,.barre-bas,.pied,.btn,.rail-filtres{display:none!important}
+  .carte,.liste-departs{box-shadow:none;border:1px solid #000;break-inside:avoid}
+  .fond-gris{background:#fff}
+  .etapes,.moyen{display:none!important}
+  .billet-page{max-width:none;border:1px solid #000}
+  .perfore{border-top:2px dotted #000}
+  .perfore::before,.perfore::after{display:none}
+}
+
+/* ======================== 16 · ESPACE VOYAGEUR =======================
+   Composants propres a l'espace connecte : rien ici ne duplique un bloc
+   deja defini plus haut (cartes, boutons, etiquettes, etapes, moyen de
+   paiement, arret/prix-troncon viennent tels quels des sections 05-11b).
+   ==================================================================== */
+
+/* En-tete de l'espace : mêmes proportions que .entete, quatre onglets fixes
+   au lieu du menu marketing. */
+.entete-espace{background:#fff;box-shadow:0 1px 0 var(--n200);position:sticky;top:0;z-index:50}
+.entete-espace .zone{display:flex;align-items:center;gap:28px;height:64px}
+.avatar{width:36px;height:36px;border-radius:var(--r-s);background:var(--i100);color:var(--i700);
+  display:grid;place-items:center;font-size:12.5px;font-weight:700;flex:none}
+.avatar-grand{width:72px;height:72px;border-radius:var(--r-l);background:var(--i700);color:#fff;
+  font-size:22px;margin:0 auto}
+.cloche{position:relative;width:38px;height:38px;border-radius:var(--r-s);background:var(--gris-fond);
+  display:grid;place-items:center;flex:none}
+.cloche .point{position:absolute;top:6px;right:7px;width:8px;height:8px;border-radius:50%;background:var(--erreur)}
+
+/* Plan de sieges — ecran Reservation. */
+.plan-sieges{background:var(--gris-fond);border-radius:var(--r-l);padding:16px;border:1.5px solid var(--n300);
+  display:inline-flex;flex-direction:column;gap:8px}
+.plan-sieges .porte{display:flex;justify-content:space-between;font-size:12px;color:var(--ardoise);
+  padding-bottom:10px;margin-bottom:10px;border-bottom:2px dashed var(--n300)}
+.rangee-sieges{display:grid;grid-template-columns:34px 34px 20px 34px 34px;gap:8px}
+.siege{position:relative;width:34px;height:36px;border-radius:8px 8px 5px 5px;border:1.5px solid var(--n300);
+  background:#fff;font-size:11px;font-weight:600;color:var(--ardoise);display:flex;align-items:center;
+  justify-content:center;cursor:pointer;transition:border-color .15s,background .15s}
+.siege input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
+.siege:hover{border-color:var(--i700)}
+.siege:has(input:checked){background:var(--i700);border-color:var(--i700);color:#fff}
+.siege-occupe{background:var(--n200);border-color:var(--n200);color:var(--n400);cursor:not-allowed;pointer-events:none}
+.siege-suggere{border-style:dashed;border-color:var(--succes);color:var(--succes)}
+.legende-sieges{display:flex;flex-direction:column;gap:10px;font-size:14px}
+.legende-sieges span{display:inline-flex;align-items:center;gap:9px}
+.legende-sieges i{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--n300);background:#fff;flex:none}
+.legende-sieges .li-occupe{background:var(--n200);border-color:var(--n200)}
+.legende-sieges .li-choisi{background:var(--i700);border-color:var(--i700)}
+
+/* Code de confirmation Mobile Money — ecran Paiement. */
+.otp{width:52px;height:62px;border-radius:var(--r-m);border:1.5px solid var(--n300);background:#fff;
+  display:flex;align-items:center;justify-content:center;font-family:var(--code);font-size:24px;font-weight:600}
+.otp:focus-within{border-color:var(--i700);box-shadow:0 0 0 3px var(--i100)}
+.otp input{width:100%;text-align:center;font-family:var(--code);font-size:24px;font-weight:600}
+
+/* Etoiles de notation — ecran Avis. Radios caches, libelles-etoiles cliquables,
+   dans l'ordre visuel inverse pour que « survoler la 4e » allume les 4 premieres
+   avec la seule pseudo-classe ~ (pas de JS necessaire). */
+.notation{display:flex;flex-direction:row-reverse;justify-content:flex-end;gap:6px}
+.notation input{position:absolute;opacity:0;pointer-events:none}
+.notation label{cursor:pointer;color:var(--n300);transition:color .1s}
+.notation input:checked ~ label,.notation label:hover,.notation label:hover ~ label{color:var(--l500)}
+
+/* Interrupteur de preference — ecran Profil. */
+.interrupteur{position:relative;display:inline-flex;width:44px;height:26px;flex:none}
+.interrupteur input{position:absolute;opacity:0;width:100%;height:100%;margin:0;cursor:pointer}
+.interrupteur .piste-sw{position:absolute;inset:0;border-radius:999px;background:var(--n400);transition:background .15s}
+.interrupteur .piste-sw::before{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;
+  border-radius:50%;background:#fff;transition:transform .15s}
+.interrupteur input:checked ~ .piste-sw{background:var(--i700)}
+.interrupteur input:checked ~ .piste-sw::before{transform:translateX(18px)}
+
+/* Escale cliquable (choix du point de descente, ecran Reservation) : le
+   `<label class="arret">` lui-meme porte l'entree — reprend .arret
+   (section 11), n'ajoute que le curseur, le radio cache et l'etat selectionne. */
+.arret{cursor:default}
+label.arret{cursor:pointer}
+.arret input{position:absolute;opacity:0}
+.arret:has(input:checked) .prix-troncon{background:var(--i700);color:#fff}
+.arret:has(input:checked) .pt{background:var(--i700);border-color:var(--i700)}
+
+/* Choix de motif (reclamation) et cases a cocher larges. */
+.motifs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.motif{display:flex;align-items:center;gap:12px;padding:13px 15px;border-radius:var(--r-m);cursor:pointer;
+  border:1.5px solid var(--n300);background:#fff;font-size:15px;font-weight:600;transition:border-color .15s,background .15s}
+.motif input{position:absolute;opacity:0}
+.motif:has(input:checked){border-color:var(--i700);background:var(--i50)}
+
+/* Ligne « a faire » du tableau de bord. */
+.a-faire{display:flex;align-items:center;gap:14px;padding:13px 15px;border-radius:var(--r-m)}
+.a-faire .puce{width:10px;height:10px;border-radius:50%;flex:none}
+
+/* Onglets de filtrage (reservations, reclamations). */
+.filtres-onglets{display:flex;gap:8px;flex-wrap:wrap}
+.filtres-onglets a{display:inline-flex;align-items:center;height:36px;padding:0 16px;border-radius:var(--r-plein);
+  font-size:14.5px;font-weight:600;background:#fff;border:1.5px solid var(--n300);color:var(--ardoise);
+  transition:background .15s,color .15s,border-color .15s}
+.filtres-onglets a:hover{border-color:var(--i700)}
+.filtres-onglets a[aria-current="true"]{background:var(--i700);border-color:var(--i700);color:#fff}
+
+@media print{
+  .entete-espace,.barre-tri,.filtres-onglets{display:none!important}
+}
+
+/* =========================== 17 · ACCUEIL PUBLIQUE ===================
+   Composants propres a la page d'accueil : la bande de tete porte un vrai
+   tableau de gare (departs reels, requetes a chaque chargement de page — pas
+   d'animation d'entree, pas de donnee inventee), les autres blocs restent
+   sur les composants deja definis plus haut (carte, grille, etiq, liens,
+   faq, badge-store, tableau back-office).
+   ==================================================================== */
+
+/* --- Bande de tete : variante sombre de .heros, tableau de gare a droite --- */
+.heros-gare{background:var(--i900);padding:38px 0 92px}
+.heros-gare::before{content:"";position:absolute;inset:0;
+  background:radial-gradient(920px 520px at 88% -18%,rgba(109,159,235,.30),transparent 60%),
+             radial-gradient(620px 420px at 4% 108%,rgba(168,130,61,.20),transparent 62%)}
+.heros-gare .zone{position:relative;z-index:2}
+.heros-grille{display:grid;grid-template-columns:minmax(0,1fr) 392px;gap:44px;align-items:start}
+.accroche h1{max-width:16ch;margin-bottom:12px}
+.accroche h1 em{font-style:normal;color:#F0D7A2}
+.accroche>p{color:rgba(255,255,255,.84);font-size:17.5px;max-width:46ch;margin:0}
+
+.preuves{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+.preuve{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.16);border-radius:var(--r-s);padding:8px 13px}
+.preuve b{font-family:var(--code);font-size:16px;font-weight:600;letter-spacing:-.01em;color:#fff}
+.preuve span{font-size:13px;color:rgba(255,255,255,.72);line-height:1.25;max-width:14ch}
+
+/* --- Tableau de gare : departs reels de la ville de reference --- */
+.tableau-gare{background:rgba(9,17,32,.62);border:1px solid rgba(255,255,255,.14);
+  border-radius:var(--r-m);backdrop-filter:blur(6px);overflow:hidden}
+.entete-gare{display:flex;align-items:center;gap:9px;padding:11px 14px;
+  border-bottom:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05)}
+.entete-gare .t{font-family:var(--code);font-size:12px;font-weight:600;letter-spacing:.1em;
+  text-transform:uppercase;color:rgba(255,255,255,.82)}
+.entete-gare .maj{margin-left:auto;font-size:11.5px;color:rgba(255,255,255,.55)}
+.puce-live{width:8px;height:8px;border-radius:50%;background:#4BD08B;flex:none;
+  box-shadow:0 0 0 3px rgba(75,208,139,.22);animation:battement 2.2s ease-in-out infinite}
+
+.rang-gare{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:12px;align-items:center;
+  padding:9px 14px;border-top:1px solid rgba(255,255,255,.07)}
+.rang-gare:first-of-type{border-top:0}
+.rang-gare .hh{font-family:var(--code);font-size:15px;font-weight:600;color:#fff;letter-spacing:-.02em}
+.rang-gare .ou{display:block;font-size:14.5px;font-weight:600;color:#fff;line-height:1.2;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rang-gare .qui{display:block;font-size:12px;color:rgba(255,255,255,.58);line-height:1.3}
+.jeton{font-size:11.5px;font-weight:600;padding:3px 8px;border-radius:5px;white-space:nowrap}
+.j-embarque{background:rgba(75,208,139,.16);color:#8FE7BB}
+.j-heure{background:rgba(255,255,255,.10);color:rgba(255,255,255,.78)}
+.j-retard{background:rgba(240,177,90,.16);color:#F2C489}
+.j-complet{background:rgba(255,255,255,.06);color:rgba(255,255,255,.45)}
+.pied-gare{padding:10px 14px;border-top:1px solid rgba(255,255,255,.12);
+  display:flex;align-items:center;gap:10px;font-size:13px;color:rgba(255,255,255,.62)}
+.pied-gare a{color:#fff;font-weight:600;margin-left:auto}
+.pied-gare a:hover{text-decoration:underline;text-underline-offset:3px}
+
+/* --- Arguments : icone en pastille indigo, texte dense --- */
+.argument{display:flex;gap:13px;align-items:flex-start}
+.argument .ic{width:40px;height:40px;border-radius:11px;background:var(--i50);color:var(--i700);
+  display:grid;place-items:center;flex:none}
+.argument h3{font-size:16px;margin-bottom:3px}
+.argument p{font-size:14.5px;color:var(--ardoise);line-height:1.45;margin:0}
+
+/* --- Garanties : trois promesses tenues par le serveur, pas par le
+       marketing. Chacune correspond a un mecanisme reel du back-office. --- */
+.garanties{display:flex;flex-direction:column}
+.garantie{display:grid;grid-template-columns:34px minmax(0,1fr);gap:14px;align-items:start;
+  padding:16px 0;border-top:1px solid var(--n200)}
+.garantie:first-child{border-top:0;padding-top:4px}
+.garantie .ic{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;flex:none}
+.g-ok .ic{background:var(--succes-fond);color:var(--succes)}
+.g-info .ic{background:var(--info-fond);color:var(--info)}
+.g-att .ic{background:var(--attention-fond);color:var(--attention)}
+.garantie h3{font-size:15.5px;margin-bottom:3px}
+.garantie p{font-size:14.5px;color:var(--ardoise);line-height:1.45;margin:0}
+.identite{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:18px;
+  padding-top:16px;border-top:1px solid var(--n200);font-size:13.5px;color:var(--ardoise)}
+.identite b{color:var(--encre);font-weight:600}
+.telephone-aide{display:inline-flex;align-items:center;gap:8px;font-weight:600;color:var(--i700);
+  white-space:nowrap}
+
+/* Defilement horizontal continu des destinations les plus desservies :
+   la piste est dupliquee en JS et boucle sur -50% pour un raccord invisible.
+   Le conteneur visible devient une query-container : chaque carte occupe
+   une fraction exacte de cette largeur (3 cartes en desktop, 2 en tablette,
+   1 en mobile), toujours pleinement visible et centree dans la section. */
+.defilement-destinations{overflow:hidden;container-type:inline-size}
+.piste-destinations{display:flex;gap:16px;width:max-content}
+.piste-destinations.en-defilement{animation-name:defiler-destinations;
+  animation-timing-function:linear;animation-iteration-count:infinite}
+.piste-destinations.en-defilement:hover,
+.piste-destinations.en-defilement:focus-within{animation-play-state:paused}
+.piste-destinations .dest{width:calc((100cqw - 32px) / 3);flex:none}
+.piste-destinations .dest .vue{height:150px}
+@keyframes defiler-destinations{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@media(max-width:900px){.piste-destinations .dest{width:calc((100cqw - 16px) / 2)}}
+@media(max-width:640px){.piste-destinations .dest{width:calc(100cqw - 16px)}.piste-destinations .dest .vue{height:140px}}
+
+/* --- Destinations : paysage duotone dessine en CSS, pas de photo a charger
+       sur un forfait data. Six palettes fixes, appliquees en boucle. --- */
+.dest{display:block;background:#fff;border-radius:var(--r-m);box-shadow:var(--ombre-s);
+  overflow:hidden;transition:box-shadow .18s,transform .18s}
+.dest:hover{box-shadow:var(--ombre-m);transform:translateY(-2px)}
+.dest .vue{display:block;position:relative;height:112px;overflow:hidden;
+  background:linear-gradient(180deg,var(--c1) 0%,var(--c2) 100%)}
+.dest .soleil{display:block;position:absolute;right:26px;top:26px;width:38px;height:38px;border-radius:50%;
+  background:var(--c3);opacity:.85;transition:transform .4s ease}
+.dest:hover .soleil{transform:translateY(-6px) scale(1.08)}
+.dest .colline{display:block;position:absolute;border-radius:50% 50% 0 0}
+.dest .c1{left:-14%;bottom:-30px;width:78%;height:76px;background:rgba(18,32,58,.55)}
+.dest .c2{right:-18%;bottom:-38px;width:86%;height:92px;background:rgba(18,32,58,.78)}
+.dest .bas{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:12px 14px}
+.dest .titre-dest{display:block;min-width:0}
+.dest .titre-dest b{display:block;font-size:15px;font-weight:700;line-height:1.28}
+.dest .sous-titre{display:block;font-size:12px;font-weight:500;color:var(--ardoise);margin-top:3px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dest .prix-dest{flex:none;text-align:right}
+.dest .etiquette{display:block;font-size:11px;color:var(--ardoise)}
+.dest .montant{display:block;font-size:15.5px;font-weight:700;letter-spacing:-.02em;white-space:nowrap}
+.dest .unite{display:block;font-size:11px;color:var(--ardoise)}
+
+.dest-c1{--c1:#34527E;--c2:#16233C;--c3:#F0C07A}
+.dest-c2{--c1:#3E5A80;--c2:#182740;--c3:#E9B061}
+.dest-c3{--c1:#4B5B84;--c2:#1A2740;--c3:#F2D096}
+.dest-c4{--c1:#2C5F6B;--c2:#13293A;--c3:#7FD3C0}
+.dest-c5{--c1:#5A5480;--c2:#1D2742;--c3:#EFB98C}
+.dest-c6{--c1:#6B5A73;--c2:#20263E;--c3:#F3C98A}
+
+/* --- Etapes numerotees --- */
+.etape .num{width:28px;height:28px;border-radius:50%;background:var(--i700);color:#fff;
+  display:grid;place-items:center;font-size:14px;font-weight:700;margin-bottom:10px}
+.etape h3{margin-bottom:5px}
+.etape p{font-size:14.5px;color:var(--ardoise);line-height:1.45;margin:0}
+
+/* --- Reserver pour un proche : le billet part ailleurs que le paiement. --- */
+.relais{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;
+  background:#fff;border-radius:var(--r-m);box-shadow:var(--ombre-s);overflow:hidden}
+.relais>div{padding:18px 20px;border-left:1px solid var(--n200);position:relative}
+.relais>div:first-child{border-left:0}
+.relais .qui{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--i500);margin-bottom:7px}
+.relais h3{font-size:16px;margin-bottom:4px}
+.relais p{font-size:14.5px;color:var(--ardoise);line-height:1.45;margin:0}
+.relais>div+div::before{content:"";position:absolute;left:-9px;top:50%;width:18px;height:18px;
+  transform:translateY(-50%) rotate(45deg);background:#fff;border-top:1px solid var(--n200);
+  border-right:1px solid var(--n200);z-index:2}
+
+/* --- Colis : grille de reference et objets interdits --- */
+.interdits{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.interdit{display:inline-flex;align-items:center;gap:6px;font-size:13.5px;font-weight:500;
+  color:var(--erreur);background:var(--erreur-fond);border-radius:var(--r-plein);padding:5px 12px}
+
+/* --- Suivi de colis : jalons de la chronologie reelle --- */
+.jalon{display:flex;gap:13px;padding:9px 0;align-items:flex-start}
+.jalon .pt{width:12px;height:12px;border-radius:50%;background:var(--succes);flex:none;margin-top:5px;
+  box-shadow:0 0 0 3px var(--succes-fond)}
+.jalon.avenir{opacity:.55}
+.jalon.avenir .pt{background:#fff;border:2px solid var(--n400);box-shadow:none}
+.jalon .txt{flex:1;min-width:0}
+.jalon b{font-size:15px;font-weight:600;display:block}
+.jalon .qd{font-size:13px;color:var(--ardoise);white-space:nowrap}
+
+/* --- Vignette compagnie --- */
+.vign{padding:16px;display:flex;flex-direction:column;gap:13px}
+.vign .bas{display:flex;align-items:center;gap:9px;border-top:1px solid var(--n200);padding-top:12px}
+
+/* --- Tarifs par axe : le tableau reste generique (section 12), ces regles
+       ne s'appliquent qu'a l'intérieur de son enveloppe sur cette page. --- */
+.enveloppe-tableau{background:#fff;border-radius:var(--r-m);box-shadow:var(--ombre-s);overflow-x:auto}
+.enveloppe-tableau .tableau{min-width:640px}
+.enveloppe-tableau .tableau th{padding:12px 16px;text-transform:uppercase;letter-spacing:.03em;
+  font-size:12.5px;border-bottom:1px solid var(--n300)}
+.enveloppe-tableau .tableau td{padding:11px 16px}
+.enveloppe-tableau .tableau .num{text-align:right;white-space:nowrap}
+.enveloppe-tableau .tableau .axe{font-weight:600}
+.enveloppe-tableau .tableau .bas-prix{color:var(--succes);font-weight:700}
+.enveloppe-tableau .tableau .voir{color:var(--i700);font-weight:600;white-space:nowrap}
+.enveloppe-tableau .tableau .voir:hover{text-decoration:underline;text-underline-offset:3px}
+.note-troncon{display:flex;gap:12px;align-items:flex-start;margin-top:12px;padding:13px 16px;
+  border-radius:var(--r-m);background:var(--succes-fond);color:var(--succes);font-size:14.5px}
+.note-troncon b{font-weight:700}
+
+/* --- Appel final : compagnie partenaire --- */
+.appel{background:var(--i700);color:#fff;padding:44px 0;position:relative;overflow:hidden}
+.appel::before{content:"";position:absolute;inset:0;
+  background:radial-gradient(680px 340px at 92% 120%,rgba(168,130,61,.30),transparent 62%)}
+.appel .zone{position:relative;z-index:2;display:flex;gap:28px;align-items:center;
+  justify-content:space-between;flex-wrap:wrap}
+.appel h2{color:#fff;margin-bottom:8px}
+.appel p{color:rgba(255,255,255,.82);font-size:16.5px;max-width:52ch;margin:0}
+
+@media(max-width:1080px){
+  .heros-grille{grid-template-columns:minmax(0,1fr);gap:26px}
+  .tableau-gare{max-width:560px}
+}
+@media(max-width:900px){
+  .relais{grid-template-columns:1fr}
+  .relais>div{border-left:0;border-top:1px solid var(--n200)}
+  .relais>div:first-child{border-top:0}
+  .relais>div+div::before{left:50%;top:-9px;transform:translateX(-50%) rotate(-45deg)}
+}
+@media(max-width:700px){
+  .heros-gare{padding:30px 0 84px}
+  .enveloppe-tableau{overflow-x:visible}
+  .enveloppe-tableau .tableau{min-width:0}
+  .enveloppe-tableau .tableau thead{position:absolute;left:-9999px}
+  .enveloppe-tableau .tableau tr{display:grid;grid-template-columns:1fr 1fr;gap:4px 14px;padding:13px 16px;
+    border-bottom:1px solid var(--n200)}
+  .enveloppe-tableau .tableau tr:last-child{border-bottom:0}
+  .enveloppe-tableau .tableau td{border:0;padding:0}
+  .enveloppe-tableau .tableau td.axe{grid-column:1/-1;font-size:15.5px;margin-bottom:4px}
+  .enveloppe-tableau .tableau td.voir-cell{grid-column:1/-1;margin-top:6px}
+  .enveloppe-tableau .tableau .num{text-align:left}
+  .enveloppe-tableau .tableau td[data-l]::before{content:attr(data-l);display:block;font-size:12px;
+    font-weight:500;color:var(--ardoise);letter-spacing:.02em}
+}
+@media(max-width:620px){
+  .preuves{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+  .preuve{flex-direction:column;align-items:flex-start;gap:2px;padding:8px 10px}
+  .preuve b{font-size:15px}
+  .preuve span{font-size:11.5px;max-width:none}
+  .accroche>p{font-size:16px}
+}
+@media print{
+  .heros-gare,.appel{display:none!important}
+}

@@ -1,0 +1,76 @@
+{% extends "espace/base_espace.html" %}
+{% load transbooking %}
+{% block titre %}Mes réclamations — TransBooking BF{% endblock %}
+
+{% block contenu %}
+<div class="zone" style="padding:32px 0 48px">
+  <div class="rang" style="margin-bottom:20px;align-items:flex-end">
+    <div>
+      <h1 style="margin-bottom:4px">Mes réclamations</h1>
+      <p class="plomb">Une compagnie doit répondre sous 48 heures. Passé ce délai, TransBooking BF reprend le dossier.</p>
+    </div>
+    <a class="btn btn-p fin" href="{% url 'web:espace-nouvelle-reclamation' %}">Nouvelle réclamation</a>
+  </div>
+
+  <div class="filtres-onglets" style="margin-bottom:20px">
+    <a href="?statut=toutes" {% if filtre == 'toutes' %}aria-current="true"{% endif %}>Toutes</a>
+    <a href="?statut=en_cours" {% if filtre == 'en_cours' %}aria-current="true"{% endif %}>En cours</a>
+    <a href="?statut=resolues" {% if filtre == 'resolues' %}aria-current="true"{% endif %}>Résolues</a>
+  </div>
+
+  <div class="pile pile-3">
+    {% for r in reclamations %}
+      <div class="carte carte-p">
+        <div class="rang" style="margin-bottom:10px">
+          {% if r.is_overdue %}
+            <span class="etiq e-err">Sans réponse depuis plus de 48 h</span>
+          {% elif r.status == 'submitted' or r.status == 'in_progress' %}
+            <span class="etiq e-info">En cours de traitement</span>
+          {% elif r.status == 'escalated' %}
+            <span class="etiq e-att">Transmise à TransBooking</span>
+          {% else %}
+            <span class="etiq e-ok">Résolue</span>
+          {% endif %}
+          <span class="mini">Déposée le {{ r.created_at|date:"j F" }}{% if r.responded_at %} · réponse reçue le {{ r.responded_at|date:"j F" }}{% endif %}</span>
+          <span class="mini code fin">RC-{{ r.pk }}</span>
+        </div>
+        <h3 style="margin-bottom:4px">{{ r.subject }}</h3>
+        <p class="mini" style="margin-bottom:12px">
+          {{ r.company.name }}{% if r.booking %} · voyage du {{ r.booking.trip.departure_time|date:"j F" }} ·
+          {{ r.booking.trip.route.origin_city.name }} → {{ r.booking.trip.route.destination_city.name }} ·
+          <span class="code">{{ r.booking.ticket_number }}</span>{% endif %}
+        </p>
+
+        {% if r.response %}
+          <div class="rang" style="padding:14px;border-radius:var(--r-m);background:var(--gris-fond);align-items:flex-start">
+            <span class="sigle" style="background:{{ r.company.primary_color|couleur_sure }}">{{ r.company.name|initiales }}</span>
+            <div style="flex:1">
+              <div class="mini">Réponse de {{ r.company.name }} · {{ r.responded_at|date:"j F" }}</div>
+              <div>{{ r.response }}</div>
+            </div>
+          </div>
+          <div class="rang" style="margin-top:14px;gap:10px">
+            {% if r.status == 'in_progress' and not r.traveler_accepted_at %}
+              <form method="post"><input type="hidden" name="pk" value="{{ r.pk }}">{% csrf_token %}<input type="hidden" name="action" value="accepter">
+                <button class="btn btn-p btn-sm" type="submit">Accepter la proposition</button></form>
+              <a class="btn btn-s btn-sm" href="{% url 'web:espace-nouvelle-reclamation' %}?reservation={{ r.booking.ticket_number }}">Répondre</a>
+            {% endif %}
+            {% if r.status != 'resolved' and r.status != 'closed' and r.status != 'escalated' %}
+              <form method="post" class="fin"><input type="hidden" name="pk" value="{{ r.pk }}">{% csrf_token %}<input type="hidden" name="action" value="escalader">
+                <button class="btn-texte" type="submit">Escalader à TransBooking</button></form>
+            {% endif %}
+          </div>
+        {% elif r.status != 'resolved' and r.status != 'closed' %}
+          <div class="rang" style="padding:14px 16px;border-radius:var(--r-m);background:var(--erreur-fond);gap:12px">
+            <div style="flex:1">Le délai de réponse peut être dépassé. Vous pouvez escalader le dossier à TransBooking BF.</div>
+            <form method="post"><input type="hidden" name="pk" value="{{ r.pk }}">{% csrf_token %}<input type="hidden" name="action" value="escalader">
+              <button class="btn btn-s btn-sm" type="submit">Escalader</button></form>
+          </div>
+        {% endif %}
+      </div>
+    {% empty %}
+      <p class="mini">Aucune réclamation dans cette catégorie.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

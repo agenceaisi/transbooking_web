@@ -1,0 +1,127 @@
+{% extends "espace/base_espace.html" %}
+{% load transbooking %}
+{% block titre %}{{ trajet.route.origin_city.name }} → {{ trajet.route.destination_city.name }} — TransBooking BF{% endblock %}
+
+{% block contenu %}
+<div class="zone" style="padding:24px 0 48px">
+  {% include "partiels/etapes.html" %}
+
+  <form method="post" action="{% url 'web:espace-reserver' pk=trajet.pk %}" id="form-reservation">
+    {% csrf_token %}
+    <div class="grille" style="grid-template-columns:minmax(0,1fr) 380px;gap:20px;align-items:start;margin-top:20px">
+      <div class="pile pile-4">
+
+        <div class="carte carte-p">
+          <div class="rang" style="margin-bottom:18px">
+            <span class="sigle" style="background:{{ trajet.route.company.primary_color|couleur_sure }}">
+              {% if trajet.route.company.sigle %}{{ trajet.route.company.sigle|initiales }}{% else %}{{ trajet.route.company.name|initiales }}{% endif %}
+            </span>
+            <div>
+              <h2 style="font-size:20px">{{ trajet.route.origin_city.name }} → {{ trajet.route.destination_city.name }}</h2>
+              <div class="mini">{{ trajet.route.company.name }} · {{ trajet.departure_time|date:"l j F" }} · {{ trajet.vehicle.registration }}</div>
+            </div>
+            <span class="etiq e-ok fin">{{ trajet.available_seats }} place{{ trajet.available_seats|pluralize }}</span>
+          </div>
+
+          {% if escales %}
+            <h3 style="font-size:15px;margin-bottom:4px">Où descendez-vous ?</h3>
+            <p class="mini" style="margin-bottom:12px">Vous ne payez que le tronçon parcouru.</p>
+            <div class="pile pile-2">
+              <label class="arret borne">
+                <input type="radio" name="destination_stop" value="" checked>
+                <span class="pt"></span>
+                <span><b>{{ trajet.route.destination_city.name }}</b> — destination finale</span>
+                <span class="prix-troncon">{{ trajet.price|fcfa }} F</span>
+              </label>
+              {% for e in escales %}
+                <label class="arret">
+                  <input type="radio" name="destination_stop" value="{{ e.pk }}">
+                  <span class="pt"></span>
+                  <span><b>{{ e.display_name|default:e.city.name }}</b> · {{ e.stop_price|fcfa }} F</span>
+                  <span class="prix-troncon">{{ e.stop_price|fcfa }} F</span>
+                </label>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+
+        <div class="carte carte-p">
+          <h3 style="margin-bottom:4px">Passager</h3>
+          <p class="mini" style="margin-bottom:16px">Le nom doit correspondre à la pièce présentée à l'embarquement.</p>
+
+          {% if form.non_field_errors %}
+            <div class="bandeau b-err" style="margin-bottom:14px"><span class="ic">!</span><div>{{ form.non_field_errors }}</div></div>
+          {% endif %}
+
+          <div class="grille g2" style="gap:12px">
+            {% for champ in form %}
+              {% if champ.name == 'first_name' or champ.name == 'last_name' or champ.name == 'phone' %}
+                <div{% if champ.name == 'phone' %} style="grid-column:1/-1"{% endif %}>
+                  <div class="champ {% if champ.errors %}champ-erreur{% endif %}">
+                    <label for="{{ champ.id_for_label }}">{{ champ.label }}</label>
+                    {{ champ }}
+                  </div>
+                  {% if champ.errors %}<div class="aide-erreur">{{ champ.errors.0 }}</div>{% endif %}
+                </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+
+          <label class="coche" style="margin-top:16px">
+            {{ form.has_luggage }} J'ai un bagage en soute
+          </label>
+          <div class="champ" style="margin-top:8px;max-width:220px">
+            <label for="{{ form.luggage_qty.id_for_label }}">Nombre de bagages</label>
+            {{ form.luggage_qty }}
+          </div>
+        </div>
+
+        <div class="carte carte-p">
+          <div class="rang" style="margin-bottom:16px">
+            <h3>Choisissez votre siège</h3>
+            <span class="mini fin">{{ trajet.available_seats }} sièges libres</span>
+          </div>
+          <div style="display:flex;gap:28px;flex-wrap:wrap">
+            <div class="plan-sieges">
+              <div class="porte"><span>◄ AVANT</span><span>PORTE</span></div>
+              {% for rangee in plan_sieges %}
+                <div class="rangee-sieges">
+                  {% for s in rangee %}
+                    {% if s.libre %}
+                      <label class="siege">
+                        <input type="radio" name="seat_number" value="{{ s.numero }}">{{ s.numero }}
+                      </label>
+                    {% else %}
+                      <span class="siege siege-occupe">{{ s.numero }}</span>
+                    {% endif %}
+                  {% endfor %}
+                </div>
+              {% endfor %}
+            </div>
+            <div class="legende-sieges">
+              <span><i></i>Libre</span>
+              <span><i class="li-occupe"></i>Occupé</span>
+              <span><i class="li-choisi"></i>Votre siège</span>
+            </div>
+          </div>
+          <p class="micro" style="margin-top:10px">Laissez le choix vide pour une attribution automatique.</p>
+        </div>
+      </div>
+
+      <aside class="carte carte-p" style="position:sticky;top:76px">
+        <h3 style="margin-bottom:12px">Votre réservation</h3>
+        <div class="billet-rang"><span class="gris">Trajet</span>
+          <b>{{ trajet.route.origin_city.name }} → {{ trajet.route.destination_city.name }}</b></div>
+        <div class="billet-rang"><span class="gris">Départ</span>
+          <b>{{ trajet.departure_time|date:"D j M" }} · {{ trajet.departure_time|time:"H:i" }}</b></div>
+        <div class="billet-rang" style="border:0;padding-top:14px;margin-top:6px;border-top:1px solid var(--n300)">
+          <span class="fort">Total</span>
+          <span class="donnee">{{ trajet.price|fcfa }} FCFA</span>
+        </div>
+        <button class="btn btn-p btn-bloc" type="submit" style="margin-top:16px">Passer au paiement</button>
+        <p class="micro" style="margin-top:10px;text-align:center">Place gardée jusqu'à 4 h avant le départ.</p>
+      </aside>
+    </div>
+  </form>
+</div>
+{% endblock %}

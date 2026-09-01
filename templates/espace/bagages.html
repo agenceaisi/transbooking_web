@@ -1,0 +1,61 @@
+{% extends "espace/base_espace.html" %}
+{% load transbooking %}
+{% block titre %}Bagages — TransBooking BF{% endblock %}
+
+{% block contenu %}
+<div class="zone" style="padding:32px 0 48px">
+  <h1 style="margin-bottom:4px">Bagages</h1>
+  <p class="plomb" style="margin-bottom:24px">Les bagages déclarés pour vos voyages à venir, et les règles de chaque compagnie.</p>
+
+  <div class="grille" style="grid-template-columns:minmax(0,1fr) 380px;gap:20px;align-items:start">
+    <div class="pile pile-4">
+      {% for r in reservations %}
+        <div class="carte carte-p">
+          <div class="rang" style="margin-bottom:14px">
+            <h3 style="font-size:17px">{{ r.trip.route.origin_city.name }} → {{ r.trip.route.destination_city.name }} · {{ r.trip.departure_time|date:"j F" }}</h3>
+            <span class="mini code fin">{{ r.ticket_number }}</span>
+          </div>
+
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="pk" value="{{ r.pk }}">
+            <label class="coche">
+              <input type="checkbox" name="has_luggage" {% if r.has_luggage %}checked{% endif %}>
+              J'ai un bagage en soute pour ce voyage
+            </label>
+            <div class="champ" style="margin-top:10px;max-width:220px">
+              <label>Nombre de bagages</label>
+              <input type="number" name="luggage_qty" min="1" value="{{ r.luggage_qty|default:'' }}">
+            </div>
+            <button class="btn btn-s btn-sm" style="margin-top:12px" type="submit">Mettre à jour</button>
+          </form>
+        </div>
+      {% empty %}
+        <p class="mini">Aucun voyage à venir.</p>
+      {% endfor %}
+    </div>
+
+    <div class="pile pile-4">
+      {% for c in compagnies %}
+        <div class="carte carte-p">
+          <h3 style="margin-bottom:12px">Règles — {{ c.name }}</h3>
+          <div class="billet-rang"><span class="gris">Franchise incluse</span><b>{{ c.baggage_policy.franchise_kg }} kg en soute</b></div>
+          <div class="billet-rang"><span class="gris">Kilo supplémentaire</span><b>{{ c.baggage_policy.price_per_extra_kg|fcfa }} FCFA / kg</b></div>
+          <div class="billet-rang"><span class="gris">Bagage cabine</span><b>{{ c.baggage_policy.cabin_bag }}</b></div>
+          <div class="billet-rang"><span class="gris">Valeur déclarée</span><b>jusqu'à {{ c.baggage_policy.declared_value_max|fcfa }} F</b></div>
+        </div>
+      {% endfor %}
+
+      <div style="padding:16px 20px;border-left:4px solid var(--attention);background:var(--attention-fond);border-radius:0 var(--r-m) var(--r-m) 0;font-size:14.5px">
+        <b>Objets interdits en soute.</b> Carburants, bonbonnes de gaz, produits corrosifs, animaux vivants.
+      </div>
+
+      <div class="carte carte-p">
+        <h3 style="margin-bottom:8px">Un bagage manquant ou abîmé ?</h3>
+        <p class="mini" style="margin-bottom:14px">Signalez-le dans les 48 heures suivant l'arrivée.</p>
+        <a class="btn btn-p btn-bloc" href="{% url 'web:espace-nouvelle-reclamation' %}">Déposer une réclamation</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

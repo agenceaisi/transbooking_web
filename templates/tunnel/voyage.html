@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% load transbooking %}
+{% block titre %}{{ trajet.route.origin_city.name }} → {{ trajet.route.destination_city.name }} · {{ trajet.departure_time|date:"j F" }} — TransBooking BF{% endblock %}
+
+{% block contenu %}
+<div class="zone" style="padding:24px 0 48px">
+  {% include "partiels/etapes.html" %}
+
+  <div class="grille" style="grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start;margin-top:20px">
+    <div class="pile pile-4">
+
+      <div class="carte carte-p">
+        <div class="rang" style="margin-bottom:16px">
+          <span class="sigle" style="background:{{ trajet.route.company.primary_color|couleur_sure }}">
+            {% if trajet.route.company.sigle %}{{ trajet.route.company.sigle|initiales }}{% else %}{{ trajet.route.company.name|initiales }}{% endif %}
+          </span>
+          <div>
+            <b style="font-size:16px">{{ trajet.route.company.name }}</b>
+            <div class="mini">{{ trajet.vehicle.vehicle_type|default:"Autocar" }} · {{ trajet.vehicle.registration }}</div>
+          </div>
+          {% if trajet.company_rating %}
+            <span class="etiq e-neutre fin">★ {{ trajet.company_rating|floatformat:1 }}</span>
+          {% endif %}
+        </div>
+
+        <div class="parcours">
+          <div>
+            <div class="h">{{ trajet.departure_time|time:"H:i" }}</div>
+            <div class="lieu">{{ trajet.route.origin_station.name|default:trajet.route.origin_city.name }}</div>
+          </div>
+          <div class="milieu">
+            <div class="d">{{ trajet.departure_time|duree_entre:trajet.arrival_time }}</div>
+            <div class="trace"></div>
+            <div class="d">{% if trajet.stops_count %}{{ trajet.stops_count }} escale{{ trajet.stops_count|pluralize }}{% else %}Direct{% endif %}</div>
+          </div>
+          <div>
+            <div class="h">{% if trajet.arrival_time %}{{ trajet.arrival_time|time:"H:i" }}{% else %}—{% endif %}</div>
+            <div class="lieu">{{ trajet.route.destination_station.name|default:trajet.route.destination_city.name }}</div>
+          </div>
+        </div>
+      </div>
+
+      {% if escales %}
+      <div class="carte carte-p">
+        <h3 style="margin-bottom:10px">Escales desservies</h3>
+        {% for e in escales %}
+          <div class="arret{% if forloop.first or forloop.last %} borne{% endif %}">
+            <span class="pt"></span>
+            <span><b>{{ e.display_name|default:e.city.name }}</b></span>
+            <span class="prix-troncon">{{ e.stop_price|fcfa }} FCFA</span>
+          </div>
+        {% endfor %}
+        <p class="micro" style="margin-top:10px">
+          Descendre à une escale coûte moins cher. La vente au tronçon arrive prochainement en ligne ;
+          d'ici là, signalez-le à l'agent au guichet.
+        </p>
+      </div>
+      {% endif %}
+
+      <form class="carte carte-p" method="post" action="{% url 'web:reserver' pk=trajet.pk %}">
+        {% csrf_token %}
+        <h3 style="margin-bottom:4px">Qui voyage&nbsp;?</h3>
+        <p class="mini" style="margin-bottom:16px">Pas besoin de créer un compte. Le billet arrive par SMS.</p>
+
+        {% if form.non_field_errors %}
+          <div class="bandeau b-err" style="margin-bottom:14px"><span class="ic">!</span><div>{{ form.non_field_errors }}</div></div>
+        {% endif %}
+
+        <div class="grille g2" style="gap:12px">
+          {% for champ in form %}
+            <div{% if champ.name == 'phone' %} style="grid-column:1/-1"{% endif %}>
+              <div class="champ {% if champ.errors %}champ-erreur{% endif %}">
+                <label for="{{ champ.id_for_label }}">{{ champ.label }}{% if champ.field.required %} *{% endif %}</label>
+                {{ champ }}
+              </div>
+              {% if champ.errors %}<div class="aide-erreur">{{ champ.errors.0 }}</div>
+              {% elif champ.help_text %}<div class="aide-champ">{{ champ.help_text }}</div>{% endif %}
+            </div>
+          {% endfor %}
+        </div>
+
+        <button class="btn btn-p btn-bloc" type="submit" style="margin-top:18px">
+          Continuer vers le paiement
+        </button>
+      </form>
+    </div>
+
+    <aside class="carte carte-p" style="position:sticky;top:76px">
+      <h3 style="margin-bottom:12px">Récapitulatif</h3>
+      <div class="billet-rang"><span class="gris">Trajet</span>
+        <b>{{ trajet.route.origin_city.name }} → {{ trajet.route.destination_city.name }}</b></div>
+      <div class="billet-rang"><span class="gris">Départ</span>
+        <b>{{ trajet.departure_time|date:"D j M" }} · {{ trajet.departure_time|time:"H:i" }}</b></div>
+      <div class="billet-rang"><span class="gris">Compagnie</span><b>{{ trajet.route.company.name }}</b></div>
+      <div class="billet-rang"><span class="gris">Places restantes</span><b>{{ trajet.available_seats }}</b></div>
+      <div class="billet-rang" style="border:0;padding-top:14px;margin-top:6px;border-top:1px solid var(--n300)">
+        <span class="fort">Total</span>
+        <span class="donnee">{{ trajet.price|fcfa }} FCFA</span>
+      </div>
+      <p class="micro" style="margin-top:10px">
+        Votre place n'est retenue qu'après cette étape. Le paiement se fait juste après.
+      </p>
+    </aside>
+  </div>
+</div>
+{% endblock %}

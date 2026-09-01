@@ -1,0 +1,91 @@
+{% extends "espace/base_espace.html" %}
+{% load transbooking %}
+{% block titre %}Billet {{ reservation.ticket_number }} — TransBooking BF{% endblock %}
+
+{% block contenu %}
+<div class="zone-etroite" style="padding:32px 0 48px;max-width:900px">
+
+  {% if reservation.status == 'pending' %}
+    <div class="bandeau b-att" style="margin-bottom:18px">
+      <span class="ic">!</span>
+      <div>
+        <b>Réglement au guichet.</b> Votre place est retenue. Présentez le numéro
+        <span class="code">{{ reservation.ticket_number }}</span> à l'agence pour payer en espèces,
+        ou <a href="{% url 'web:espace-paiement' pk=reservation.pk %}">payez en ligne</a>.
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="grille" style="grid-template-columns:400px minmax(0,1fr);gap:28px;align-items:start">
+    <div class="billet-page carte">
+      <div class="billet-haut" style="background:var(--i700);color:#fff;border-radius:var(--r-m) var(--r-m) 0 0">
+        <div class="rang">
+          <div>
+            <div class="mini" style="color:rgba(255,255,255,.6)">Billet n°</div>
+            <div class="code" style="font-size:20px;color:#fff">{{ reservation.ticket_number }}</div>
+          </div>
+          <span class="etiq fin" style="background:{% if reservation.status == 'paid' %}var(--succes){% else %}var(--attention){% endif %};color:#fff">{{ statut }}</span>
+        </div>
+        <div class="parcours" style="margin-top:18px">
+          <div><div class="h" style="color:#fff">{{ trajet.departure_time|time:"H:i" }}</div><div class="lieu" style="color:rgba(255,255,255,.7)">{{ trajet.route.origin_city.name }}</div></div>
+          <div class="milieu"><div class="trace" style="background:rgba(255,255,255,.25)"></div></div>
+          <div style="text-align:right"><div class="h" style="color:#fff">{% if trajet.arrival_time %}{{ trajet.arrival_time|time:"H:i" }}{% else %}—{% endif %}</div><div class="lieu" style="color:rgba(255,255,255,.7)">{{ trajet.route.destination_city.name }}</div></div>
+        </div>
+      </div>
+
+      <div class="perfore"></div>
+
+      <div class="billet-bas">
+        <div class="billet-rang"><span class="gris">Passager</span><b>{{ reservation.first_name }} {{ reservation.last_name }}</b></div>
+        <div class="billet-rang"><span class="gris">Date</span><b>{{ trajet.departure_time|date:"l j F Y" }}</b></div>
+        <div class="billet-rang"><span class="gris">Compagnie</span><b>{{ trajet.route.company.name }}</b></div>
+        <div class="billet-rang"><span class="gris">Véhicule</span><b>{{ trajet.vehicle.registration }}</b></div>
+        <div class="billet-rang"><span class="gris">Siège</span><b>{{ reservation.seat_number|default:"—" }}</b></div>
+        {% if reservation.has_luggage %}
+          <div class="billet-rang"><span class="gris">Bagage soute</span><b>{{ reservation.luggage_qty|default:1 }}</b></div>
+        {% endif %}
+        <div class="billet-rang"><span class="gris">Montant</span><b>{{ reservation.amount|fcfa }} FCFA</b></div>
+
+        {% if reservation.qr_code %}
+          <div style="text-align:center;margin-top:20px">
+            <img src="data:image/png;base64,{{ reservation.qr_code }}"
+                 alt="Code de contrôle du billet"
+                 width="160" height="160" style="margin:0 auto;border-radius:8px">
+            <p class="micro" style="margin-top:8px">Présentez ce code au contrôleur à l'embarquement.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="pile pile-3">
+      <div class="bandeau b-ok"><span class="ic">✓</span><div><b>Ce billet est valide, montrez-le à l'embarquement.</b></div></div>
+
+      <div class="carte carte-p">
+        <h3 style="margin-bottom:12px">Votre trajet</h3>
+        <div class="arret borne">
+          <span class="pt"></span>
+          <span><b>{{ trajet.route.origin_station.name|default:trajet.route.origin_city.name }}</b></span>
+          <span class="mini">{{ trajet.departure_time|time:"H:i" }}</span>
+        </div>
+        {% for e in trajet.route.stops.all %}
+          <div class="arret"><span class="pt"></span><span>{{ e.display_name|default:e.city.name }}</span><span class="mini">—</span></div>
+        {% endfor %}
+        <div class="arret borne">
+          <span class="pt"></span>
+          <span><b>{{ trajet.route.destination_station.name|default:trajet.route.destination_city.name }}</b></span>
+          <span class="mini">{% if trajet.arrival_time %}{{ trajet.arrival_time|time:"H:i" }}{% endif %}</span>
+        </div>
+      </div>
+
+      <div class="carte carte-p">
+        <h3 style="margin-bottom:12px">Contact</h3>
+        <div class="billet-rang"><span class="gris">{{ trajet.route.company.name }}</span><b>{{ trajet.route.company.phone|default:"—" }}</b></div>
+        <div class="rang" style="margin-top:14px;gap:10px">
+          <button class="btn btn-s" type="button" onclick="window.print()">Imprimer</button>
+          <a class="btn-texte fin" style="color:var(--erreur)" href="{% url 'web:espace-reservations' %}">Annuler</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
